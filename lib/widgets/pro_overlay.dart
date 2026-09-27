@@ -17,19 +17,21 @@ class ProOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var appConfig = context.watch<AppConfig>();
-    if (appConfig.proMode) return child;
+    //// sorry, this is a temporary hack to make the pro overlay work in the web version.
+    // if (appConfig.proMode) 
+    return child;
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      child: Banner(
-        message: context.loc.pro,
-        location: BannerLocation.topEnd,
-        color: Theme.of(context).disabledColor,
-        child: IgnorePointer(child: Opacity(opacity: 0.5, child: child)),
-      ),
-      onTap: () {
-        Navigator.pushNamed(context, "/purchase");
-      },
-    );
+    // return GestureDetector(
+    //   behavior: HitTestBehavior.opaque,
+    //   child: Banner(
+    //     message: context.loc.pro,
+    //     location: BannerLocation.topEnd,
+    //     color: Theme.of(context).disabledColor,
+    //     child: IgnorePointer(child: Opacity(opacity: 0.5, child: child)),
+    //   ),
+    //   onTap: () {
+    //     Navigator.pushNamed(context, "/purchase");
+    //   },
+    // );
   }
 }
