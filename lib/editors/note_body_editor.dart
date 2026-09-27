@@ -10,6 +10,7 @@ import 'package:gitjournal/l10n.dart';
 class NoteBodyEditor extends StatelessWidget {
   final TextEditingController textController;
   final bool autofocus;
+  final bool readOnly;
   final Function onChanged;
 
   const NoteBodyEditor({
@@ -17,6 +18,7 @@ class NoteBodyEditor extends StatelessWidget {
     required this.textController,
     required this.autofocus,
     required this.onChanged,
+    this.readOnly = false,
   });
 
   @override
@@ -25,6 +27,7 @@ class NoteBodyEditor extends StatelessWidget {
 
     return TextField(
       autofocus: autofocus,
+      readOnly: readOnly,
       keyboardType: TextInputType.multiline,
       maxLines: null,
       style: textStyle(context),

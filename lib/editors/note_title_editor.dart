@@ -10,8 +10,10 @@ import 'package:gitjournal/l10n.dart';
 class NoteTitleEditor extends StatelessWidget {
   final TextEditingController textController;
   final Function onChanged;
+  final bool readOnly;
 
-  const NoteTitleEditor(this.textController, this.onChanged);
+  const NoteTitleEditor(this.textController, this.onChanged,
+      {this.readOnly = false});
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +22,7 @@ class NoteTitleEditor extends StatelessWidget {
 
     return TextField(
       keyboardType: TextInputType.text,
+      readOnly: readOnly,
       style: style,
       decoration: InputDecoration(
         hintText: context.loc.editorsCommonDefaultTitleHint,

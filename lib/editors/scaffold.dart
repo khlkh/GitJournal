@@ -118,6 +118,7 @@ class _EditorScaffoldState extends State<EditorScaffold> {
 
   void _switchMode() {
     var settings = context.read<Settings>();
+    if (settings.readOnlyMode) return;
 
     setState(() {
       _editingMode = !_editingMode;
@@ -137,6 +138,8 @@ class _EditorScaffoldState extends State<EditorScaffold> {
   @override
   Widget build(BuildContext context) {
     var settings = context.watch<Settings>();
+    var readOnly = settings.readOnlyMode;
+    var allowEdits = _editingMode && !readOnly;
 
     var responsiveBody = LayoutBuilder(builder: (context, constraints) {
       // FIXME: This shouldn't depend on the font
@@ -181,7 +184,8 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                   editorState: widget.editorState,
                   noteModified: widget.noteModified,
                   extraButton: widget.extraButton,
-                  allowEdits: _editingMode,
+                  allowEdits: allowEdits,
+                  readOnly: readOnly,
                   onEditingModeChange: _switchMode,
                 ),
               ),
@@ -207,7 +211,8 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                 editor: widget.editor,
                 editorState: widget.editorState,
                 parentFolder: widget.parentFolder,
-                allowEdits: _editingMode,
+                allowEdits: allowEdits,
+                readOnly: readOnly,
                 zenMode: settings.zenMode,
                 onZenModeChanged: () {
                   setState(() {

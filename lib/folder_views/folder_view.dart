@@ -258,21 +258,25 @@ class _FolderViewState extends State<FolderView> {
 
     var settings = context.watch<Settings>();
     final showButtomMenuBar = settings.bottomMenuBar;
+    final readOnly = settings.readOnlyMode;
 
     return Scaffold(
       body: Builder(builder: _buildBody),
       extendBody: true,
       drawer: AppDrawer(),
-      floatingActionButton: createButton,
+      floatingActionButton: readOnly ? null : createButton,
       floatingActionButtonLocation:
           showButtomMenuBar ? FloatingActionButtonLocation.endDocked : null,
-      bottomNavigationBar:
-          showButtomMenuBar ? NewNoteNavBar(onPressed: _newPost) : null,
+      bottomNavigationBar: showButtomMenuBar && !readOnly
+          ? NewNoteNavBar(onPressed: _newPost)
+          : null,
     );
   }
 
   Future<void> _newPost(EditorType editorType) async {
     var settings = context.read<Settings>();
+    if (settings.readOnlyMode) return;
+
     var rootFolder = context.read<NotesFolderFS>();
 
     var folder = widget.notesFolder;
@@ -503,16 +507,19 @@ class _FolderViewState extends State<FolderView> {
             _resetSelection();
           },
         ),
-      IconButton(
-        icon: const Icon(Icons.delete),
-        onPressed: _deleteSelectedNotes,
-      ),
-      extraActions,
+      if (!context.watch<Settings>().readOnlyMode)
+        IconButton(
+          icon: const Icon(Icons.delete),
+          onPressed: _deleteSelectedNotes,
+        ),
+      if (!context.watch<Settings>().readOnlyMode) extraActions,
     ];
   }
 
   Future<void> _deleteSelectedNotes() async {
     var settings = context.read<Settings>();
+    if (settings.readOnlyMode) return;
+
     var shouldDelete = true;
     if (settings.confirmDelete) {
       shouldDelete = (await showDialog(
@@ -523,7 +530,11 @@ class _FolderViewState extends State<FolderView> {
     }
     if (shouldDelete == true) {
       var repo = context.read<GitJournalRepo>();
-      repo.removeNotes(_selectedNotes);
+      try {
+        await repo.removeNotes(_selectedNotes);
+      } catch (ex) {
+        showErrorSnackbar(context, ex);
+      }
     }
 
     _resetSelection();

@@ -126,6 +126,98 @@ class GitAuthor extends StatelessWidget {
   }
 }
 
+class GitProxy extends StatelessWidget {
+  const GitProxy({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    var gitConfig = context.watch<GitConfig>();
+
+    return ListTile(
+      title: const Text('代理设置'),
+      subtitle: Text(
+        gitConfig.proxyUrl.isEmpty
+            ? '使用系统代理'
+            : gitConfig.proxyUrl,
+      ),
+      onTap: () async {
+        var newProxy = await showDialog(
+          context: context,
+          builder: (context) => const GitProxyDialog(),
+        );
+
+        if (newProxy != null && newProxy != gitConfig.proxyUrl) {
+          gitConfig.proxyUrl = newProxy;
+          await gitConfig.save();
+        }
+      },
+    );
+  }
+}
+
+class GitProxyDialog extends StatefulWidget {
+  const GitProxyDialog({super.key});
+
+  @override
+  State<GitProxyDialog> createState() => _GitProxyDialogState();
+}
+
+class _GitProxyDialogState extends State<GitProxyDialog> {
+  final gitProxyKey = GlobalKey<FormFieldState<String>>();
+
+  @override
+  Widget build(BuildContext context) {
+    var gitConfig = context.watch<GitConfig>();
+    var isValid = gitProxyKey.currentState?.isValid;
+    var proxy = gitProxyKey.currentState?.value;
+
+    var form = TextFormField(
+      key: gitProxyKey,
+      keyboardType: TextInputType.url,
+      validator: (String? value) {
+        value = value!.trim();
+        if (value.isEmpty) {
+          return null;
+        }
+        if (!value.contains('://')) {
+          return '请输入 http://host:port 格式的代理地址';
+        }
+        return null;
+      },
+      textInputAction: TextInputAction.done,
+      initialValue: gitConfig.proxyUrl,
+      onChanged: (_) {
+        setState(() {
+          // To trigger the isValid check
+        });
+      },
+    );
+
+    return AlertDialog(
+      title: const Text('代理设置'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          form,
+          const SizedBox(height: 8),
+          const Text('留空则自动使用 Android 系统代理'),
+        ],
+      ),
+      actions: <Widget>[
+        TextButton(
+          child: Text(context.loc.settingsCancel),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        TextButton(
+          onPressed:
+              isValid == true ? () => Navigator.of(context).pop(proxy) : null,
+          child: Text(context.loc.settingsOk),
+        ),
+      ],
+    );
+  }
+}
+
 class _GitAuthorDialog extends StatefulWidget {
   const _GitAuthorDialog();
 

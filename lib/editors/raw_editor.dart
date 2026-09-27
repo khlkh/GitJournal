@@ -36,6 +36,7 @@ class RawEditor extends StatefulWidget implements Editor {
   final bool editMode;
   final String? highlightString;
   final ThemeData theme;
+  final bool readOnly;
 
   const RawEditor({
     super.key,
@@ -45,6 +46,7 @@ class RawEditor extends StatefulWidget implements Editor {
     required this.highlightString,
     required this.theme,
     required this.common,
+    this.readOnly = false,
   });
 
   @override
@@ -112,6 +114,7 @@ class RawEditorState extends State<RawEditor>
         key: _editorKey,
         textController: _textController,
         autofocus: widget.editMode,
+        readOnly: widget.readOnly,
         onChanged: _noteTextChanged,
       ),
     );
@@ -233,6 +236,7 @@ class RawEditorState extends State<RawEditor>
 class _NoteEditor extends StatefulWidget {
   final TextEditingController textController;
   final bool autofocus;
+  final bool readOnly;
   final Function onChanged;
 
   const _NoteEditor({
@@ -240,6 +244,7 @@ class _NoteEditor extends StatefulWidget {
     required this.textController,
     required this.autofocus,
     required this.onChanged,
+    this.readOnly = false,
   });
 
   @override
@@ -271,6 +276,7 @@ class _NoteEditorState extends State<_NoteEditor> {
       key: _textFieldKey,
       focusNode: _focusNode,
       autofocus: widget.autofocus,
+      readOnly: widget.readOnly,
       keyboardType: TextInputType.multiline,
       maxLines: null,
       style: _NoteEditor.textStyle(context),

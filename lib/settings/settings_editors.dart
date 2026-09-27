@@ -46,6 +46,16 @@ class SettingsEditorsScreenState extends State<SettingsEditorsScreen> {
     }
 
     var body = ListView(children: <Widget>[
+      SwitchListTile(
+        title: Text(context.loc.settingsEditorsReadOnlyMode),
+        subtitle: Text(context.loc.settingsEditorsReadOnlyModeSubtitle),
+        value: settings.readOnlyMode,
+        onChanged: (bool newVal) {
+          settings.readOnlyMode = newVal;
+          settings.save();
+          setState(() {});
+        },
+      ),
       const DefaultEditorTile(),
       const DefaultFileFormatTile(),
       //SettingsHeader(context.loc.settings.editors.markdownEditor),

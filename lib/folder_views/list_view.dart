@@ -156,7 +156,7 @@ class _FolderListViewState extends State<FolderListView> {
 
     assert(note.file.oid.isNotEmpty);
 
-    if (settings.swipeToDelete) {
+    if (settings.swipeToDelete && !settings.readOnlyMode) {
       viewItem = IconDismissable(
         key: ValueKey("FolderListView_${note.filePath}"),
         backgroundColor: Colors.red[800]!,

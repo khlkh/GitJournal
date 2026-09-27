@@ -9,6 +9,7 @@ import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/repository.dart';
 import 'package:gitjournal/repository_manager.dart';
 import 'package:gitjournal/settings/git_config.dart';
+import 'package:gitjournal/settings/settings.dart';
 import 'package:gitjournal/settings/settings_git_remote.dart';
 import 'package:gitjournal/settings/settings_git_widgets.dart';
 import 'package:gitjournal/settings/widgets/settings_header.dart';
@@ -30,6 +31,7 @@ class SettingsGit extends StatelessWidget {
         SettingsHeader(context.loc.settingsGitAuthor),
         const GitAuthor(),
         const GitAuthorEmail(),
+        const GitProxy(),
         ListTile(
           title: Text(context.loc.settingsGitRemoteTitle),
           subtitle: Text(context.loc.settingsGitRemoteSubtitle),
@@ -60,6 +62,16 @@ class SettingsGit extends StatelessWidget {
         RedButton(
           text: context.loc.settingsDeleteRepo,
           onPressed: () async {
+            var settings = context.read<Settings>();
+            if (settings.readOnlyMode) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(context.loc.settingsEditorsReadOnlyMode),
+                ),
+              );
+              return;
+            }
+
             var ok = await showDialog(
               context: context,
               builder: (_) => IrreversibleActionConfirmationDialog(

@@ -30,6 +30,7 @@ class ChecklistEditor extends StatefulWidget implements Editor {
   final bool editMode;
   final String? highlightString;
   final ThemeData theme;
+  final bool readOnly;
 
   const ChecklistEditor({
     super.key,
@@ -39,6 +40,7 @@ class ChecklistEditor extends StatefulWidget implements Editor {
     required this.highlightString,
     required this.theme,
     required this.common,
+    this.readOnly = false,
   });
 
   @override
@@ -137,42 +139,50 @@ class ChecklistEditorState extends State<ChecklistEditor>
     }
     itemTiles.add(AddItemButton(
       key: UniqueKey(),
-      onPressed: () {
-        _noteTextChanged();
-        setState(() {
-          var item = checklist.buildItem(false, "");
-          var fn = _getFn(item);
+      onPressed: widget.readOnly
+          ? null
+          : () {
+              _noteTextChanged();
+              setState(() {
+                var item = checklist.buildItem(false, "");
+                var fn = _getFn(item);
 
-          checklist.addItem(item);
+                checklist.addItem(item);
 
-          // FIXME: Make this happen on the next build
-          Timer(50.milliseconds, () {
-            FocusScope.of(context).requestFocus();
-            FocusScope.of(context).requestFocus(fn);
-          });
-        });
-      },
+                // FIXME: Make this happen on the next build
+                Timer(50.milliseconds, () {
+                  FocusScope.of(context).requestFocus();
+                  FocusScope.of(context).requestFocus(fn);
+                });
+              });
+            },
     ));
 
     Widget checklistWidget = ReorderableListView(
       children: itemTiles,
-      onReorder: (int oldIndex, int newIndex) {
-        _noteTextChanged();
-        setState(() {
-          var item = checklist.removeAt(oldIndex);
+      onReorder: widget.readOnly
+          ? (oldIndex, newIndex) {}
+          : (int oldIndex, int newIndex) {
+              _noteTextChanged();
+              setState(() {
+                var item = checklist.removeAt(oldIndex);
 
-          if (newIndex > oldIndex) {
-            checklist.insertItem(newIndex - 1, item);
-          } else {
-            checklist.insertItem(newIndex, item);
-          }
-        });
-      },
+                if (newIndex > oldIndex) {
+                  checklist.insertItem(newIndex - 1, item);
+                } else {
+                  checklist.insertItem(newIndex, item);
+                }
+              });
+            },
     );
 
     var titleEditor = Padding(
       padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0.0),
-      child: NoteTitleEditor(_titleTextController, _noteTextChanged),
+      child: NoteTitleEditor(
+        _titleTextController,
+        _noteTextChanged,
+        readOnly: widget.readOnly,
+      ),
     );
 
     return EditorScaffold(
@@ -229,6 +239,7 @@ class ChecklistEditorState extends State<ChecklistEditor>
       item: item,
       focusNode: _getFn(item),
       autofocus: autofocus,
+      readOnly: widget.readOnly,
       statusChanged: (bool? newVal) {
         setState(() {
           if (newVal != null) {
@@ -335,6 +346,7 @@ class ChecklistItemTile extends StatefulWidget {
   final void Function() itemFinished;
   final FocusNode focusNode;
   final bool autofocus;
+  final bool readOnly;
 
   final String? highlightString;
   final ThemeData theme;
@@ -348,6 +360,7 @@ class ChecklistItemTile extends StatefulWidget {
     required this.itemFinished,
     required this.focusNode,
     this.autofocus = false,
+    this.readOnly = false,
     required this.highlightString,
     required this.theme,
   });
@@ -399,6 +412,7 @@ class _ChecklistItemTileState extends State<ChecklistItemTile> {
     var editor = TextField(
       autofocus: widget.autofocus,
       focusNode: widget.focusNode,
+      readOnly: widget.readOnly,
       keyboardType: TextInputType.text,
       maxLines: null,
       style: style,
@@ -427,23 +441,25 @@ class _ChecklistItemTileState extends State<ChecklistItemTile> {
             width: 24.0,
             child: Checkbox(
               value: widget.item.checked,
-              onChanged: widget.statusChanged,
+              onChanged: widget.readOnly ? null : widget.statusChanged,
             ),
           ),
         ],
       ),
       title: editor,
-      trailing: IconButton(
-        icon: Icon(widget.focusNode.hasFocus ? Icons.clear : null),
-        onPressed: widget.itemRemoved,
-      ),
+      trailing: widget.readOnly
+          ? null
+          : IconButton(
+              icon: Icon(widget.focusNode.hasFocus ? Icons.clear : null),
+              onPressed: widget.itemRemoved,
+            ),
       enabled: !widget.item.checked,
     );
   }
 }
 
 class AddItemButton extends StatelessWidget {
-  final void Function() onPressed;
+  final void Function()? onPressed;
 
   const AddItemButton({super.key, required this.onPressed});
 

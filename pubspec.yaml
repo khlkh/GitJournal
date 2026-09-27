@@ -49,7 +49,9 @@ dependencies:
   font_awesome_flutter: ^10.0.0
   function_types: ^0.1.0
   go_git_dart:
-    git: https://github.com/GitJournal/go_git_dart.git
+    git:
+      url: https://github.com/xtccc/go_git_dart.git
+      ref: 8a5db82
   git_setup:
     path: packages/git_setup
   google_api_availability: ^5.0.1

@@ -232,6 +232,9 @@ class NoteEditorState extends State<NoteEditor>
     Log.i("Note Edit State: $state");
 
     if (state != AppLifecycleState.resumed) {
+      var readOnly = context.read<Settings>().readOnlyMode;
+      if (readOnly) return;
+
       var note = _getNoteFromEditor();
       if (note == null) return;
       if (!_noteModified(note)) return;
@@ -253,6 +256,9 @@ class NoteEditorState extends State<NoteEditor>
     // ignore: deprecated_member_use
     return WillPopScope(
       onWillPop: () async {
+        var readOnly = context.read<Settings>().readOnlyMode;
+        if (readOnly) return true;
+
         var note = _getNoteFromEditor();
         if (note == null) return true;
         var savedNote = await _saveNote(note);
@@ -264,6 +270,7 @@ class NoteEditorState extends State<NoteEditor>
 
   Widget _getEditor() {
     var note = _note;
+    var readOnly = context.watch<Settings>().readOnlyMode;
 
     switch (_editorType) {
       case EditorType.Markdown:
@@ -276,6 +283,7 @@ class NoteEditorState extends State<NoteEditor>
           highlightString: widget.highlightString,
           theme: Theme.of(context),
           common: this,
+          readOnly: readOnly,
         );
       case EditorType.Raw:
         return RawEditor(
@@ -286,6 +294,7 @@ class NoteEditorState extends State<NoteEditor>
           highlightString: widget.highlightString,
           theme: Theme.of(context),
           common: this,
+          readOnly: readOnly,
         );
       case EditorType.Checklist:
         return ChecklistEditor(
@@ -296,6 +305,7 @@ class NoteEditorState extends State<NoteEditor>
           highlightString: widget.highlightString,
           theme: Theme.of(context),
           common: this,
+          readOnly: readOnly,
         );
       case EditorType.Journal:
         return JournalEditor(
@@ -306,6 +316,7 @@ class NoteEditorState extends State<NoteEditor>
           highlightString: widget.highlightString,
           theme: Theme.of(context),
           common: this,
+          readOnly: readOnly,
         );
       case EditorType.Org:
         return OrgEditor(
@@ -316,6 +327,7 @@ class NoteEditorState extends State<NoteEditor>
           highlightString: widget.highlightString,
           theme: Theme.of(context),
           common: this,
+          readOnly: readOnly,
         );
     }
   }
@@ -355,6 +367,12 @@ class NoteEditorState extends State<NoteEditor>
   Future<void> _exitEditorSelected(Note note) async {
     assert(note.oid.isEmpty);
 
+    var readOnly = context.read<Settings>().readOnlyMode;
+    if (readOnly) {
+      Navigator.pop(context);
+      return;
+    }
+
     var saved = await _saveNote(note);
     if (saved && mounted) {
       Navigator.pop(context);
@@ -366,6 +384,8 @@ class NoteEditorState extends State<NoteEditor>
 
   Future<void> _renameNote(Note note) async {
     assert(note.oid.isEmpty);
+
+    if (context.read<Settings>().readOnlyMode) return;
 
     if (_isNewNote && !_newNoteRenamed) {
       if (note.shouldRebuildPath) {
@@ -447,6 +467,8 @@ class NoteEditorState extends State<NoteEditor>
   Future<void> _deleteNote(Note note) async {
     assert(note.oid.isEmpty);
 
+    if (context.read<Settings>().readOnlyMode) return;
+
     if (_isNewNote && !_noteModified(note)) {
       Navigator.pop(context); // Note Editor
       return;
@@ -510,6 +532,8 @@ class NoteEditorState extends State<NoteEditor>
   // Returns bool indicating if the note was successfully saved
   Future<bool> _saveNote(Note note) async {
     assert(note.oid.isEmpty);
+
+    if (context.read<Settings>().readOnlyMode) return true;
 
     if (!_noteModified(note)) return true;
 
@@ -583,6 +607,8 @@ class NoteEditorState extends State<NoteEditor>
   Future<void> _moveNoteToFolderSelected(Note note) async {
     assert(note.oid.isEmpty);
 
+    if (context.read<Settings>().readOnlyMode) return;
+
     var destFolder = await showDialog<NotesFolderFS>(
       context: context,
       builder: (context) => FolderSelectionDialog(),
@@ -613,6 +639,8 @@ class NoteEditorState extends State<NoteEditor>
   Future<void> _discardChanges(Note note) async {
     assert(note.oid.isEmpty);
 
+    if (context.read<Settings>().readOnlyMode) return;
+
     if (!_isNewNote) {
       var repo = context.read<GitJournalRepo>();
       repo.discardChanges(note);
@@ -626,6 +654,8 @@ class NoteEditorState extends State<NoteEditor>
 
   Future<void> _editTags(Note note) async {
     assert(note.oid.isEmpty);
+
+    if (context.read<Settings>().readOnlyMode) return;
 
     final rootFolder = context.read<NotesFolderFS>();
     var inlineTagsView = InlineTagsProvider.of(context, listen: false);

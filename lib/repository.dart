@@ -49,6 +49,14 @@ class GitJournalRepo with ChangeNotifier {
   final NotesFolderConfig folderConfig;
   final Settings settings;
 
+  /// Throws when the repo is in read-only mode. Called at the top of every
+  /// mutating operation.
+  void _checkWriteAllowed() {
+    if (settings.readOnlyMode) {
+      throw Exception("Read-only mode is enabled");
+    }
+  }
+
   final FileStorage fileStorage;
   final FileStorageCache fileStorageCache;
 
@@ -324,7 +332,7 @@ class GitJournalRepo with ChangeNotifier {
 
   Future<void> syncNotes({bool doNotThrow = false}) async {
     // This is extremely slow with dart-git, can take over a second!
-    if (_shouldCheckForChanges()) {
+    if (!settings.readOnlyMode && _shouldCheckForChanges()) {
       try {
         var repo = await GitAsyncRepository.load(repoPath);
         await _commitUnTrackedChanges(repo, gitConfig);
@@ -371,9 +379,11 @@ class GitJournalRepo with ChangeNotifier {
 
       noteLoadingFuture = _loadNotes();
 
-      await _networkLock.synchronized(() async {
-        await _gitRepo.push();
-      });
+      if (!settings.readOnlyMode) {
+        await _networkLock.synchronized(() async {
+          await _gitRepo.push();
+        });
+      }
 
       Log.d("Synced!");
       attempt.add(SyncStatus.Done);
@@ -428,6 +438,7 @@ class GitJournalRepo with ChangeNotifier {
   }
 
   Future<void> removeFolder(NotesFolderFS folder) async {
+    _checkWriteAllowed();
     logEvent(Event.FolderDeleted);
 
     await _gitOpLock.synchronized(() async {
@@ -445,6 +456,7 @@ class GitJournalRepo with ChangeNotifier {
   }
 
   Future<void> renameFolder(NotesFolderFS folder, String newFolderName) async {
+    _checkWriteAllowed();
     assert(!newFolderName.contains(p.separator));
 
     logEvent(Event.FolderRenamed);
@@ -467,6 +479,7 @@ class GitJournalRepo with ChangeNotifier {
   }
 
   Future<Note> renameNote(Note fromNote, String newFileName) async {
+    _checkWriteAllowed();
     assert(!newFileName.contains(p.separator));
     assert(fromNote.oid.isNotEmpty);
 
@@ -502,6 +515,7 @@ class GitJournalRepo with ChangeNotifier {
 
   Future<List<Note>> moveNotes(
       List<Note> notes, NotesFolderFS destFolder) async {
+    _checkWriteAllowed();
     notes = notes
         .where((n) => n.parent.folderPath != destFolder.folderPath)
         .toList();
@@ -539,11 +553,13 @@ class GitJournalRepo with ChangeNotifier {
   }
 
   Future<Note> saveNoteToDisk(Note note) async {
+    _checkWriteAllowed();
     assert(note.oid.isEmpty);
     return NoteStorage.save(note);
   }
 
   Future<Note> addNote(Note note) async {
+    _checkWriteAllowed();
     assert(note.oid.isEmpty);
     logEvent(Event.NoteAdded);
 
@@ -567,6 +583,7 @@ class GitJournalRepo with ChangeNotifier {
   void removeNote(Note note) => removeNotes([note]);
 
   Future<void> removeNotes(List<Note> notes) async {
+    _checkWriteAllowed();
     logEvent(Event.NoteDeleted);
 
     await _gitOpLock.synchronized(() async {
@@ -592,6 +609,7 @@ class GitJournalRepo with ChangeNotifier {
   }
 
   Future<void> undoRemoveNote(Note note) async {
+    _checkWriteAllowed();
     logEvent(Event.NoteUndoDeleted);
 
     await _gitOpLock.synchronized(() async {
@@ -608,6 +626,7 @@ class GitJournalRepo with ChangeNotifier {
   }
 
   Future<Note> updateNote(Note oldNote, Note newNote) async {
+    _checkWriteAllowed();
     assert(oldNote.oid.isNotEmpty);
     assert(newNote.oid.isEmpty);
 
@@ -690,6 +709,7 @@ class GitJournalRepo with ChangeNotifier {
   }
 
   Future<void> discardChanges(Note note) async {
+    _checkWriteAllowed();
     // FIXME: Add the checkout method to GJRepo
     var gitRepo = await GitAsyncRepository.load(repoPath);
     await gitRepo.checkout(note.filePath);

@@ -23,9 +23,10 @@ class AppConfig extends ChangeNotifier {
 
   int version = 0;
 
-  bool proMode = false;
+  // Fork 版：Pro 功能默认解锁，不进行 IAP 验证
+  bool proMode = true;
 
-  var validateProMode = true;
+  var validateProMode = false;
 
   var debugLogLevel = 'v';
 
@@ -41,8 +42,9 @@ class AppConfig extends ChangeNotifier {
         pref.getBool("collectCrashReports") ?? collectCrashReports;
 
     version = pref.getInt("appSettingsVersion") ?? version;
-    proMode = pref.getBool("proMode") ?? proMode;
-    validateProMode = pref.getBool("validateProMode") ?? validateProMode;
+    // Fork 版：无视本地历史值，无条件启用 Pro 并跳过 IAP 验证
+    proMode = true;
+    validateProMode = false;
 
     debugLogLevel = pref.getString("debugLogLevel") ?? debugLogLevel;
     experimentalSubfolders =

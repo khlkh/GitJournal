@@ -37,6 +37,7 @@ class MarkdownEditor extends StatefulWidget implements Editor {
   final bool editMode;
   final String? highlightString;
   final ThemeData theme;
+  final bool readOnly;
 
   const MarkdownEditor({
     super.key,
@@ -47,6 +48,7 @@ class MarkdownEditor extends StatefulWidget implements Editor {
     required this.highlightString,
     required this.theme,
     required this.common,
+    this.readOnly = false,
   });
 
   @override
@@ -126,11 +128,13 @@ class MarkdownEditorState extends State<MarkdownEditor>
           NoteTitleEditor(
             _titleTextController,
             _noteTitleTextChanged,
+            readOnly: widget.readOnly,
           ),
           NoteBodyEditor(
             key: _bodyEditorKey,
             textController: _textController,
             autofocus: widget.editMode,
+            readOnly: widget.readOnly,
             onChanged: _noteTextChanged,
           ),
         ],

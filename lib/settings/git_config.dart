@@ -37,6 +37,8 @@ class GitConfig extends ChangeNotifier
   var sshPassword = "";
   @override
   var sshKeyType = SettingsSSHKey.Default.toEnum();
+  @override
+  var proxyUrl = "";
 
   void load() {
     gitAuthor = getString("gitAuthor") ?? gitAuthor;
@@ -46,6 +48,7 @@ class GitConfig extends ChangeNotifier
     sshPassword = getString("sshPassword") ?? sshPassword;
     sshKeyType =
         SettingsSSHKey.fromInternalString(getString("sshKeyType")).toEnum();
+    proxyUrl = getString("proxyUrl") ?? proxyUrl;
   }
 
   @override
@@ -65,6 +68,7 @@ class GitConfig extends ChangeNotifier
       SettingsSSHKey.fromEnum(sshKeyType).toInternalString(),
       SettingsSSHKey.fromEnum(def.sshKeyType).toInternalString(),
     );
+    await setString("proxyUrl", proxyUrl, def.proxyUrl);
 
     notifyListeners();
   }

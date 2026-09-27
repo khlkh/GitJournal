@@ -730,9 +730,9 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: HEAD
-      resolved-ref: "3dcb23f9a9aee33733e2066b201720159e46e4b3"
-      url: "https://github.com/GitJournal/go_git_dart.git"
+      ref: "8a5db82"
+      resolved-ref: "8a5db82385f6b26bab5e7b55c44365416473be0b"
+      url: "https://github.com/xtccc/go_git_dart.git"
     source: git
     version: "0.0.1"
   go_router:

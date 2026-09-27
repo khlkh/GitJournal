@@ -142,6 +142,8 @@
   "settingsExperimentalHistory": "History View",
   "settingsEditorsTitle": "Editor Settings",
   "settingsEditorsSubtitle": "Configure how different editors work",
+  "settingsEditorsReadOnlyMode": "只读模式",
+  "settingsEditorsReadOnlyModeSubtitle": "开启后笔记不可编辑、删除、重命名、移动或新建",
   "settingsEditorsDefaultEditor": "Default Editor",
   "settingsEditorsDefaultState": "Default State",
   "settingsEditorsMarkdownEditor": "Markdown Editor",

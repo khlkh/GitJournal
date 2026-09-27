@@ -6,6 +6,10 @@ package io.gitjournal.gitjournal;
 
 import androidx.annotation.NonNull;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.ProxyInfo;
+import android.os.Build;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.WindowManager;
@@ -34,6 +38,26 @@ public class MainActivity extends FlutterActivity {
         channel = new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL_NAME);
         channel.setMethodCallHandler(
                     (call, result) -> {
+                        if (call.method.equals("getProxy")) {
+                            try {
+                                if (Build.VERSION.SDK_INT < 23) {
+                                    result.success(null);
+                                    return;
+                                }
+                                ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                                ProxyInfo proxyInfo = cm.getDefaultProxy();
+                                if (proxyInfo == null || proxyInfo.getHost() == null) {
+                                    result.success(null);
+                                } else {
+                                    String host = proxyInfo.getHost();
+                                    int port = proxyInfo.getPort();
+                                    result.success(host + ":" + port);
+                                }
+                            } catch (Exception e) {
+                                result.success(null);
+                            }
+                            return;
+                        }
                         result.notImplemented();
                 }
         );

@@ -486,6 +486,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settingsEditorsSubtitle => 'Configure how different editors work';
 
   @override
+  String get settingsEditorsReadOnlyMode => 'Read-Only Mode';
+
+  @override
+  String get settingsEditorsReadOnlyModeSubtitle =>
+      'When enabled, notes cannot be edited, deleted, renamed, moved or created';
+
+  @override
   String get settingsEditorsDefaultEditor => 'Default Editor';
 
   @override

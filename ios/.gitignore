@@ -59,3 +59,5 @@ fastlane/screenshots/
 Runner.app.dSYM.zip
 *.ipa
 Gemfile.lock
+
+Flutter/ephemeral/

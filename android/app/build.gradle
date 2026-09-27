@@ -15,10 +15,10 @@ if (keystorePropertiesFile.exists()) {
 }
 if (!keystoreProperties.containsKey('keyAlias')) {
     // to simplify local development
-    keystoreProperties['keyAlias'] = 'local'
-    keystoreProperties['keyPassword'] = 'local'
-    keystoreProperties['storeFile'] = 'local'
-    keystoreProperties['storePassword'] = 'local'
+    keystoreProperties['keyAlias'] = 'local123'
+    keystoreProperties['keyPassword'] = 'local123'
+    keystoreProperties['storeFile'] = 'local123'
+    keystoreProperties['storePassword'] = 'local123'
 }
 
 android {

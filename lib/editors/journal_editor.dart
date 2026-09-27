@@ -29,6 +29,7 @@ class JournalEditor extends StatefulWidget implements Editor {
   final bool editMode;
   final String? highlightString;
   final ThemeData theme;
+  final bool readOnly;
 
   @override
   final EditorCommon common;
@@ -41,6 +42,7 @@ class JournalEditor extends StatefulWidget implements Editor {
     required this.highlightString,
     required this.theme,
     required this.common,
+    this.readOnly = false,
   });
 
   @override
@@ -112,11 +114,13 @@ class JournalEditorState extends State<JournalEditor>
                 _note = _note.copyWith(created: dt);
               });
             },
+            readOnly: widget.readOnly,
           ),
           NoteBodyEditor(
             key: _editorKey,
             textController: _textController,
             autofocus: widget.editMode,
+            readOnly: widget.readOnly,
             onChanged: _noteTextChanged,
           ),
         ],

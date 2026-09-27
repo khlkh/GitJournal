@@ -25,6 +25,7 @@ typedef GitFetchFunction = Future<void> Function(
   String sshPrivateKey,
   String sshPassword,
   String statusFile,
+  String proxyUrl,
 );
 
 typedef GitCloneFunction = Future<void> Function({
@@ -34,6 +35,7 @@ typedef GitCloneFunction = Future<void> Function({
   required String sshPrivateKey,
   required String sshPassword,
   required String statusFile,
+  required String proxyUrl,
 });
 
 typedef GitDefaultBranchFunction = Future<String> Function(
@@ -42,6 +44,7 @@ typedef GitDefaultBranchFunction = Future<String> Function(
   String sshPublicKey,
   String sshPrivateKey,
   String sshPassword,
+  String proxyUrl,
 );
 
 Future<void> cloneRemotePluggable({
@@ -53,6 +56,7 @@ Future<void> cloneRemotePluggable({
   required String sshPassword,
   required String authorName,
   required String authorEmail,
+  required String proxyUrl,
   required Func1<GitTransferProgress, void> progressUpdate,
   required GitFetchFunction gitFetchFn,
   required GitCloneFunction gitCloneFn,
@@ -72,6 +76,7 @@ Future<void> cloneRemotePluggable({
       sshPrivateKey: sshPrivateKey,
       sshPassword: sshPassword,
       statusFile: statusFile,
+      proxyUrl: proxyUrl,
     );
   }
 
@@ -88,7 +93,7 @@ Future<void> cloneRemotePluggable({
 
   try {
     await gitFetchFn(repoPath, remoteName, sshPublicKey, sshPrivateKey,
-        sshPassword, statusFile);
+        sshPassword, statusFile, proxyUrl);
   } catch (ex) {
     rethrow;
   } finally {
@@ -98,7 +103,7 @@ Future<void> cloneRemotePluggable({
   var remoteBranchName = "";
   try {
     remoteBranchName = await defaultBranchFn(
-        repoPath, remoteName, sshPublicKey, sshPrivateKey, sshPassword);
+        repoPath, remoteName, sshPublicKey, sshPrivateKey, sshPassword, proxyUrl);
   } catch (ex, st) {
     Log.e("`git fetch default branch` failed", ex: ex, stacktrace: st);
   }

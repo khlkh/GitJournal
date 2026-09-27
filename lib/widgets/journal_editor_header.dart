@@ -12,8 +12,10 @@ import 'package:intl/intl.dart';
 class JournalEditorHeader extends StatelessWidget {
   final DateTime dt;
   final Func1<DateTime, void> onChange;
+  final bool readOnly;
 
-  const JournalEditorHeader(this.dt, {required this.onChange});
+  const JournalEditorHeader(this.dt,
+      {required this.onChange, this.readOnly = false});
 
   @override
   Widget build(BuildContext context) {
@@ -54,9 +56,11 @@ class JournalEditorHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 8.0, bottom: 18.0),
       child: GestureDetector(
-        onTap: () async {
-          var orig = dt;
-          var date = await showDatePicker(
+        onTap: readOnly
+            ? null
+            : () async {
+                var orig = dt;
+                var date = await showDatePicker(
             context: context,
             initialDate: orig,
             firstDate: DateTime(1000),
@@ -83,7 +87,7 @@ class JournalEditorHeader extends StatelessWidget {
             time.minute,
           );
           onChange(d);
-        },
+            },
         child: w,
       ),
     );

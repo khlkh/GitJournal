@@ -16,6 +16,7 @@ import 'package:gitjournal/error_reporting.dart';
 import 'package:gitjournal/logger/logger.dart';
 import 'package:gitjournal/settings/git_config.dart';
 import 'package:gitjournal/utils/git_desktop.dart';
+import 'package:gitjournal/utils/proxy.dart';
 import 'package:go_git_dart/go_git_dart_async.dart';
 import 'package:path/path.dart' as p;
 import 'package:universal_io/io.dart' show Platform;
@@ -152,12 +153,13 @@ class GitNoteRepository {
 
   Future<void> fetch() async {
     var remoteName = 'origin';
+    var proxyUrl = await getGitProxy(config.proxyUrl) ?? "";
 
     if (Platform.isAndroid || Platform.isIOS) {
       try {
         var bindings = GitBindingsAsync();
         await bindings.fetch(remoteName, gitRepoPath,
-            utf8.encode(config.sshPrivateKey), config.sshPassword);
+            utf8.encode(config.sshPrivateKey), config.sshPassword, proxyUrl);
       } catch (ex) {
         rethrow;
       }
@@ -217,11 +219,12 @@ class GitNoteRepository {
     }
 
     var remoteName = 'origin';
+    var proxyUrl = await getGitProxy(config.proxyUrl) ?? "";
     if (Platform.isAndroid || Platform.isIOS) {
       try {
         var bindings = GitBindingsAsync();
         await bindings.push(remoteName, gitRepoPath,
-            utf8.encode(config.sshPrivateKey), config.sshPassword);
+            utf8.encode(config.sshPrivateKey), config.sshPassword, proxyUrl);
       } catch (ex, stackTrace) {
         /*
         if (ex is gb.GitException) {

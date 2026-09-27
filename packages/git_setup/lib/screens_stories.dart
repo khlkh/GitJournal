@@ -30,6 +30,9 @@ class DummyGitConfig implements IGitConfig {
   String sshPublicKey = "";
 
   @override
+  String proxyUrl = "";
+
+  @override
   Future<void> save() async {}
 }
 

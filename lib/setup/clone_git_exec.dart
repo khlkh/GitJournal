@@ -19,6 +19,7 @@ Future<void> cloneRemote({
   required String sshPassword,
   required String authorName,
   required String authorEmail,
+  required String proxyUrl,
   required Func1<GitTransferProgress, void> progressUpdate,
 }) {
   return cloneRemotePluggable(
@@ -30,6 +31,7 @@ Future<void> cloneRemote({
     sshPassword: sshPassword,
     authorName: authorName,
     authorEmail: authorEmail,
+    proxyUrl: proxyUrl,
     progressUpdate: progressUpdate,
     gitCloneFn: _clone,
     gitFetchFn: _fetch,
@@ -44,6 +46,7 @@ Future<void> _clone({
   required String sshPrivateKey,
   required String sshPassword,
   required String statusFile,
+  required String proxyUrl,
 }) async {
   // FIXME: Stop ignoring the statusFile
   return gitCloneViaExecutable(
@@ -61,6 +64,7 @@ Future<void> _fetch(
   String sshPrivateKey,
   String sshPassword,
   String statusFile,
+  String proxyUrl,
 ) {
   // FIXME: Stop ignoring the statusFile
   return gitFetchViaExecutable(
@@ -77,6 +81,7 @@ Future<String> _defaultBranch(
   String sshPublicKey,
   String sshPrivateKey,
   String sshPassword,
+  String proxyUrl,
 ) {
   return gitDefaultBranchViaExecutable(
     repoPath: repoPath,

@@ -30,6 +30,7 @@ class OrgEditor extends StatefulWidget implements Editor {
   final bool editMode;
   final String? highlightString;
   final ThemeData theme;
+  final bool readOnly;
 
   const OrgEditor({
     super.key,
@@ -39,6 +40,7 @@ class OrgEditor extends StatefulWidget implements Editor {
     required this.highlightString,
     required this.theme,
     required this.common,
+    this.readOnly = false,
   });
 
   @override
@@ -105,6 +107,7 @@ class OrgEditorState extends State<OrgEditor>
         key: _editorKey,
         textController: _textController,
         autofocus: widget.editMode,
+        readOnly: widget.readOnly,
         onChanged: _noteTextChanged,
       ),
     );
@@ -228,6 +231,7 @@ class OrgEditorState extends State<OrgEditor>
 class _NoteEditor extends StatelessWidget {
   final TextEditingController textController;
   final bool autofocus;
+  final bool readOnly;
   final Function onChanged;
 
   const _NoteEditor({
@@ -235,6 +239,7 @@ class _NoteEditor extends StatelessWidget {
     required this.textController,
     required this.autofocus,
     required this.onChanged,
+    this.readOnly = false,
   });
 
   static TextStyle textStyle(BuildContext context) {
@@ -248,6 +253,7 @@ class _NoteEditor extends StatelessWidget {
 
     return TextField(
       autofocus: autofocus,
+      readOnly: readOnly,
       keyboardType: TextInputType.multiline,
       maxLines: null,
       style: textStyle(context),

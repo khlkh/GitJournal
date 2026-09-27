@@ -63,6 +63,8 @@ class Settings extends ChangeNotifier with SettingsSharedPref {
   bool confirmDelete = true;
   bool hardWrap = false;
 
+  bool readOnlyMode = false;
+
   String locale = Platform.localeName;
 
   void load() {
@@ -101,6 +103,7 @@ class Settings extends ChangeNotifier with SettingsSharedPref {
     confirmDelete = getBool("confirmDelete") ?? confirmDelete;
 
     hardWrap = getBool("hardWrap") ?? hardWrap;
+    readOnlyMode = getBool("readOnlyMode") ?? readOnlyMode;
     customMetaData = getString("customMetaData") ?? customMetaData;
     locale = getString("locale") ?? locale;
   }
@@ -146,6 +149,7 @@ class Settings extends ChangeNotifier with SettingsSharedPref {
     await setInt("settingsVersion", version, def.version);
 
     await setBool("hardWrap", hardWrap, def.hardWrap);
+    await setBool("readOnlyMode", readOnlyMode, def.readOnlyMode);
     await setString("locale", locale, def.locale);
 
     notifyListeners();
@@ -172,6 +176,7 @@ class Settings extends ChangeNotifier with SettingsSharedPref {
       'emojiParser': emojiParser.toString(),
       'bottomMenuBar': bottomMenuBar.toString(),
       'confirmDelete': confirmDelete.toString(),
+      'readOnlyMode': readOnlyMode.toString(),
     };
   }
 }

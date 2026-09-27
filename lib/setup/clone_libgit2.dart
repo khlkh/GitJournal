@@ -11,6 +11,7 @@ import 'package:dart_git/plumbing/reference.dart';
 import 'package:function_types/function_types.dart';
 import 'package:git_setup/git_transfer_progress.dart';
 import 'package:gitjournal/logger/logger.dart';
+import 'package:gitjournal/utils/proxy.dart';
 import 'package:go_git_dart/go_git_dart_async.dart';
 
 import 'clone.dart';
@@ -24,8 +25,10 @@ Future<void> cloneRemote({
   required String sshPassword,
   required String authorName,
   required String authorEmail,
+  required String proxyUrl,
   required Func1<GitTransferProgress, void> progressUpdate,
-}) {
+}) async {
+  var proxy = await getGitProxy(proxyUrl);
   return cloneRemotePluggable(
     repoPath: repoPath,
     cloneUrl: cloneUrl,
@@ -35,6 +38,7 @@ Future<void> cloneRemote({
     sshPassword: sshPassword,
     authorName: authorName,
     authorEmail: authorEmail,
+    proxyUrl: proxy ?? "",
     progressUpdate: progressUpdate,
     gitCloneFn: _clone,
     gitFetchFn: _fetch,
@@ -49,6 +53,7 @@ Future<void> _clone({
   required String sshPrivateKey,
   required String sshPassword,
   required String statusFile,
+  required String proxyUrl,
 }) async {
   var bindings = GitBindingsAsync();
   await bindings.clone(
@@ -56,6 +61,7 @@ Future<void> _clone({
     repoPath,
     utf8.encode(sshPrivateKey),
     sshPassword,
+    proxyUrl,
   );
 }
 
@@ -66,10 +72,11 @@ Future<void> _fetch(
   String sshPrivateKey,
   String sshPassword,
   String statusFile,
+  String proxyUrl,
 ) async {
   var bindings = GitBindingsAsync();
   await bindings.fetch(
-      remoteName, repoPath, utf8.encode(sshPrivateKey), sshPassword);
+      remoteName, repoPath, utf8.encode(sshPrivateKey), sshPassword, proxyUrl);
 }
 
 Future<String> _defaultBranch(
@@ -78,6 +85,7 @@ Future<String> _defaultBranch(
   String sshPublicKey,
   String sshPrivateKey,
   String sshPassword,
+  String proxyUrl,
 ) async {
   try {
     var repo = GitRepository.load(repoPath);
@@ -88,7 +96,7 @@ Future<String> _defaultBranch(
 
     var bindings = GitBindingsAsync();
     var branch = await bindings.defaultBranch(
-        remote.url, utf8.encode(sshPrivateKey), sshPassword);
+        remote.url, utf8.encode(sshPrivateKey), sshPassword, proxyUrl);
 
     Log.i("Got default branch: $branch");
     if (branch.isNotEmpty) {

@@ -14,6 +14,7 @@ import 'package:gitjournal/editors/note_editor.dart';
 import 'package:gitjournal/folder_views/card_view.dart';
 import 'package:gitjournal/folder_views/grid_view.dart';
 import 'package:gitjournal/folder_views/journal_view.dart';
+import 'package:gitjournal/settings/settings.dart';
 import 'package:gitjournal/logger/logger.dart';
 import 'package:gitjournal/repository.dart';
 import 'package:gitjournal/utils/utils.dart';
@@ -107,6 +108,9 @@ Future<void> openNoteEditor(
 }
 
 bool openNewNoteEditor(BuildContext context, String noteSpec) {
+  var settings = context.read<Settings>();
+  if (settings.readOnlyMode) return false;
+
   var rootFolder = context.read<NotesFolderFS>();
   var parentFolder = rootFolder;
   var folderConfig = context.read<NotesFolderConfig>();

@@ -21,6 +21,7 @@ class EditorBottomBar extends StatelessWidget {
   final EditorState editorState;
   final NotesFolderFS parentFolder;
   final bool allowEdits;
+  final bool readOnly;
   final bool zenMode;
   final Func0<void> onZenModeChanged;
   final bool metaDataEditable;
@@ -49,6 +50,7 @@ class EditorBottomBar extends StatelessWidget {
     required this.redoAllowed,
     required this.onFindSelected,
     required this.findAllowed,
+    this.readOnly = false,
   });
 
   @override
@@ -75,6 +77,7 @@ class EditorBottomBar extends StatelessWidget {
             zenModeEnabled: zenMode,
             zenModeChanged: onZenModeChanged,
             metaDataEditable: metaDataEditable,
+            readOnly: readOnly,
             findAllowed: findAllowed,
             onFindSelected: onFindSelected,
           ),
@@ -194,6 +197,7 @@ class BottomMenuSheet extends StatelessWidget {
   final bool zenModeEnabled;
   final Func0<void> zenModeChanged;
   final bool metaDataEditable;
+  final bool readOnly;
 
   final bool findAllowed;
   final Func0<void> onFindSelected;
@@ -207,6 +211,7 @@ class BottomMenuSheet extends StatelessWidget {
     required this.metaDataEditable,
     required this.onFindSelected,
     required this.findAllowed,
+    this.readOnly = false,
   });
 
   @override
@@ -223,7 +228,7 @@ class BottomMenuSheet extends StatelessWidget {
 
             editor.common.discardChanges(note);
           },
-          enabled: editorState.noteModified,
+          enabled: editorState.noteModified && !readOnly,
         ),
         ListTile(
           leading: const Icon(Icons.share),
@@ -235,7 +240,7 @@ class BottomMenuSheet extends StatelessWidget {
             shareNote(note);
           },
         ),
-        if (metaDataEditable)
+        if (metaDataEditable && !readOnly)
           ProOverlay(
             child: ListTile(
               leading: const FaIcon(FontAwesomeIcons.tag),
@@ -248,17 +253,18 @@ class BottomMenuSheet extends StatelessWidget {
               },
             ),
           ),
-        ListTile(
-          key: const ValueKey('EditFileNameButton'),
-          leading: const Icon(Icons.edit),
-          title: Text(context.loc.editorsCommonEditFileName),
-          onTap: () {
-            var note = editorState.getNote();
-            Navigator.of(context).pop();
+        if (!readOnly)
+          ListTile(
+            key: const ValueKey('EditFileNameButton'),
+            leading: const Icon(Icons.edit),
+            title: Text(context.loc.editorsCommonEditFileName),
+            onTap: () {
+              var note = editorState.getNote();
+              Navigator.of(context).pop();
 
-            editor.common.renameNote(note);
-          },
-        ),
+              editor.common.renameNote(note);
+            },
+          ),
         ProOverlay(
           child: ListTile(
             leading: const FaIcon(FontAwesomeIcons.peace),

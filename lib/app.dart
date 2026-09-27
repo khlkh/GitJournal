@@ -309,8 +309,26 @@ class JournalAppState extends State<JournalApp> {
 
     var locale = Locale(settings.locale);
     var lSplit = settings.locale.split("_");
-    if (lSplit.length > 1) {
-      locale = Locale(lSplit[0], lSplit[1]);
+    if (lSplit.length >= 3) {
+      locale = Locale.fromSubtags(
+        languageCode: lSplit[0],
+        scriptCode: lSplit[1],
+        countryCode: lSplit[2],
+      );
+    } else if (lSplit.length == 2) {
+      // A two-part tag like "zh_Hans" is a script, while "pt_BR" is a country.
+      const knownScripts = {
+        'Hans', 'Hant', 'Latn', 'Cyrl', 'Arab', 'Deva', 'Grek', 'Hira',
+        'Kana', 'Hang', 'Thai',
+      };
+      if (knownScripts.contains(lSplit[1])) {
+        locale = Locale.fromSubtags(
+          languageCode: lSplit[0],
+          scriptCode: lSplit[1],
+        );
+      } else {
+        locale = Locale(lSplit[0], lSplit[1]);
+      }
     }
 
     return MaterialApp(

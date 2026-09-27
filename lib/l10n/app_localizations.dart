@@ -987,6 +987,18 @@ abstract class AppLocalizations {
   /// **'Configure how different editors work'**
   String get settingsEditorsSubtitle;
 
+  /// No description provided for @settingsEditorsReadOnlyMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-Only Mode'**
+  String get settingsEditorsReadOnlyMode;
+
+  /// No description provided for @settingsEditorsReadOnlyModeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When enabled, notes cannot be edited, deleted, renamed, moved or created'**
+  String get settingsEditorsReadOnlyModeSubtitle;
+
   /// No description provided for @settingsEditorsDefaultEditor.
   ///
   /// In en, this message translates to:

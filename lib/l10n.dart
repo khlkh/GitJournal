@@ -136,6 +136,11 @@ extension LocalizedBuildContext on BuildContext {
 
 // Arranged Alphabetically with the exception of 'en'
 // Remember to update Info.plist
+// NOTE: zh is intentionally NOT listed here. The app_zh.arb file is an
+// untranslated copy of the en template; only zh_Hans (Simplified Chinese)
+// contains actual translations. Listing Locale('zh') would shadow zh_Hans
+// during locale resolution (both match with equal score and 'zh' comes
+// first), causing the UI to fall back to English.
 const gitJournalSupportedLocales = [
   Locale('en'),
   Locale('de'),

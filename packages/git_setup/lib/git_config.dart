@@ -15,6 +15,7 @@ abstract class IGitConfig {
   String get sshPrivateKey;
   String get sshPassword;
   SshKeyType get sshKeyType;
+  String get proxyUrl;
 
   set gitAuthor(String x);
   set gitAuthorEmail(String x);
@@ -22,6 +23,7 @@ abstract class IGitConfig {
   set sshPrivateKey(String x);
   set sshPassword(String x);
   set sshKeyType(SshKeyType x);
+  set proxyUrl(String x);
 
   Future<void> save();
 }

@@ -143,6 +143,11 @@ class AppRouter {
     }
 
     if (route.startsWith(AppRoute.NewNotePrefix)) {
+      if (settings.readOnlyMode) {
+        Log.i("New Note ignored - read-only mode");
+        return null;
+      }
+
       var type = route.substring(AppRoute.NewNotePrefix.length);
       var et = SettingsEditorType.fromInternalString(type).toEditorType();
 

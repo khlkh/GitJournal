@@ -572,6 +572,7 @@ class GitHostSetupScreenState extends State<GitHostSetupScreen> {
         sshPassword: gitConfig.sshPassword,
         sshPrivateKey: gitConfig.sshPrivateKey,
         sshPublicKey: gitConfig.sshPublicKey,
+        proxyUrl: gitConfig.proxyUrl,
         authorEmail: gitConfig.gitAuthorEmail,
         authorName: gitConfig.gitAuthor,
         progressUpdate: (GitTransferProgress p) {
