@@ -68,7 +68,11 @@ Future<void> _gitCommandViaExecutable({
   // NOTE: File.chmodSync here resolves to a no-op extension from dart_git
   // (utils/file_extensions.dart), so use the system chmod instead. ssh refuses
   // to use keys with permissive modes ("UNPROTECTED PRIVATE KEY FILE").
-  await Process.run('chmod', ['600', temp.path]);
+  // This file is desktop-only (mobile uses go_git_dart in-process), but guard
+  // anyway so it can never crash if the code path is ever shared.
+  if (Platform.isLinux || Platform.isMacOS) {
+    await Process.run('chmod', ['600', temp.path]);
+  }
 
   var command = 'git ${args.join(' ')}';
   Log.i("Running $command");
@@ -118,7 +122,9 @@ Future<String> gitDefaultBranchViaExecutable({
   var dir = Directory.systemTemp.createTempSync();
   var temp = File("${dir.path}/key");
   await temp.writeAsString(privateKey);
-  await Process.run('chmod', ['600', temp.path]);
+  if (Platform.isLinux || Platform.isMacOS) {
+    await Process.run('chmod', ['600', temp.path]);
+  }
 
   var process = await Process.start(
     'git',
