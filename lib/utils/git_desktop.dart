@@ -68,7 +68,8 @@ Future<void> _gitCommandViaExecutable({
   await temp.writeAsString(privateKey);
   temp.chmodSync(int.parse('0600', radix: 8));
 
-  Log.i("Running git ${args.join(' ')}");
+  var command = 'git ${args.join(' ')}';
+  Log.i("Running $command");
   var process = await Process.start(
     'git',
     args,
@@ -80,19 +81,21 @@ Future<void> _gitCommandViaExecutable({
   );
 
   Log.d('env GIT_SSH_COMMAND="ssh -i ${temp.path} -o IdentitiesOnly=yes"');
-  Log.d("git ${args.join(' ')}");
+  Log.d(command);
 
-  var exitCode = await process.exitCode;
+  // Drain stdout/stderr concurrently with the process exit to avoid
+  // pipe-buffer deadlocks, and keep stderr so real git errors are visible.
+  final stdoutFuture = process.stdout.transform(utf8.decoder).join();
+  final stderrFuture = process.stderr.transform(utf8.decoder).join();
+  final exitCode = await process.exitCode;
+  final stdout = await stdoutFuture;
+  final stderr = await stderrFuture;
+
   await dir.delete(recursive: true);
 
-  var stdoutB = <int>[];
-  await for (var d in process.stdout) {
-    stdoutB.addAll(d);
-  }
-  var stdout = utf8.decode(stdoutB);
-
   if (exitCode != 0) {
-    var ex = Exception("Failed to fetch - $stdout - exitCode: $exitCode");
+    var detail = stderr.trim().isNotEmpty ? stderr.trim() : stdout.trim();
+    var ex = Exception("$command failed - $detail - exitCode: $exitCode");
     throw ex;
   }
 }
@@ -132,19 +135,21 @@ Future<String> gitDefaultBranchViaExecutable({
   Log.d('env GIT_SSH_COMMAND="ssh -i ${temp.path} -o IdentitiesOnly=yes"');
   Log.d('git remote show $remoteName');
 
-  var exitCode = await process.exitCode;
+  final stdoutFuture = process.stdout.transform(utf8.decoder).join();
+  final stderrFuture = process.stderr.transform(utf8.decoder).join();
+  final exitCode = await process.exitCode;
+  final stdout = await stdoutFuture;
+  final stderr = await stderrFuture;
+
   await dir.delete(recursive: true);
 
   if (exitCode != 0) {
-    var ex = Exception("Failed to fetch default branch, exitCode: $exitCode");
+    var detail = stderr.trim().isNotEmpty ? stderr.trim() : stdout.trim();
+    var ex = Exception(
+        "git remote show $remoteName failed - $detail - exitCode: $exitCode");
     throw ex;
   }
 
-  var stdoutB = <int>[];
-  await for (var d in process.stdout) {
-    stdoutB.addAll(d);
-  }
-  var stdout = utf8.decode(stdoutB);
   for (var line in LineSplitter.split(stdout)) {
     if (line.contains('HEAD branch:')) {
       var branch = line.split(':')[1].trim();
