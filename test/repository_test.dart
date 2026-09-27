@@ -195,8 +195,10 @@ Future<void> main() async {
     expect(headCommit.parents.length, 1);
     expect(headCommit.parents[0], headHash);
   },
-      skip: 'TODO(fork): broken by dart-git/go_git_dart bump - reloadNotes '
-          'now creates an extra timestamped commit. See TODO-fork-tracking.md');
+      skip: 'UPSTREAM BUG (pre-existing at c8a67e09): dart-git rewrites subtree '
+          'tree hashes (non-canonical entry order) on add+commit, defeating the '
+          'empty-commit guard and creating a spurious "Auto Commit" on first '
+          'load. See TODO-fork-tracking.md section A.');
 
   test('updateNote - created metadata stays the same', () async {
     var headHash = GitHash('38e8c9150c0c004c9f72221ac7c19cf770575545');
