@@ -75,10 +75,29 @@ SPDX-License-Identifier: Apache-2.0
                 <data android:scheme="gitjournal" android:host="login.oauth2" />
                 <!-- Triggering URI would be gitjournal://login.oauth2 -->
             </intent-filter>
+            <intent-filter>
+                <!-- Used for opening a specific repo via deep link / widget -->
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="gitjournal" android:host="repo" />
+                <!-- Triggering URI would be gitjournal://repo/{repoId} -->
+            </intent-filter>
         </activity>
 
         <meta-data android:name="flutterEmbedding" android:value="2" />
         <meta-data android:name="io.sentry.dsn" android:value="https://35f34dbec289435fbe16483faacf49a5@sentry.io/5168082" />
+
+        <!-- Home Screen Widget Receiver -->
+        <receiver android:name=".RepoWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_repo_info" />
+        </receiver>
 
         <meta-data android:name="com.sec.android.support.multiwindow" android:value="true" />
         <meta-data android:name="com.samsung.android.multidisplay.keep_process_alive" android:value="true"/>

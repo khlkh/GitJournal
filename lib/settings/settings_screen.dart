@@ -15,6 +15,7 @@ import 'package:gitjournal/settings/settings_analyatics.dart';
 import 'package:gitjournal/settings/settings_editors.dart';
 import 'package:gitjournal/settings/settings_experimental.dart';
 import 'package:gitjournal/settings/settings_git.dart';
+import 'package:gitjournal/settings/settings_repos.dart';
 import 'package:gitjournal/settings/settings_storage.dart';
 import 'package:gitjournal/settings/settings_ui.dart';
 import 'package:gitjournal/settings/widgets/settings_header.dart';
@@ -37,6 +38,20 @@ class SettingsScreen extends StatelessWidget {
               builder: (context) => const SettingsUIScreen(),
               settings: const RouteSettings(
                 name: SettingsUIScreen.routePath,
+              ),
+            );
+            Navigator.push(context, route);
+          },
+        ),
+        SettingsTile(
+          iconData: FontAwesomeIcons.database,
+          title: context.loc.settingsListReposTitle,
+          subtitle: context.loc.settingsListReposSubtitle,
+          onTap: () {
+            var route = MaterialPageRoute(
+              builder: (context) => const SettingsReposScreen(),
+              settings: const RouteSettings(
+                name: SettingsReposScreen.routePath,
               ),
             );
             Navigator.push(context, route);

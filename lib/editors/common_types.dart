@@ -3,10 +3,9 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
-
 import 'package:gitjournal/core/notes/note.dart';
 
-enum EditorType { Markdown, Raw, Checklist, Journal, Org }
+enum EditorType { Markdown, Raw, Checklist, Journal, Org, AppFlowy }
 
 bool editorSupported(NoteFileFormat format, EditorType type) {
   switch (type) {
@@ -24,6 +23,9 @@ bool editorSupported(NoteFileFormat format, EditorType type) {
 
     case EditorType.Org:
       return format == NoteFileFormat.OrgMode;
+
+    case EditorType.AppFlowy:
+      return format == NoteFileFormat.Markdown;
   }
 }
 
@@ -43,5 +45,8 @@ NoteFileFormat defaultFormat(EditorType type) {
 
     case EditorType.Org:
       return NoteFileFormat.OrgMode;
+
+    case EditorType.AppFlowy:
+      return NoteFileFormat.Markdown;
   }
 }

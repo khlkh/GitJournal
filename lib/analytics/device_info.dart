@@ -249,7 +249,7 @@ Future<pb.DeviceInfo> buildDeviceInfo() async {
       appName: webInfo.appName,
       appVersion: webInfo.appVersion,
       deviceMemory:
-          webInfo.deviceMemory != null ? Int64(webInfo.deviceMemory!) : null,
+          webInfo.deviceMemory != null ? Int64(webInfo.deviceMemory!.toInt()) : null,
       language: webInfo.language,
       languages: webInfo.languages?.map((e) => e.toString()),
       platform: webInfo.platform,

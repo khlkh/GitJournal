@@ -7,6 +7,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:function_types/function_types.dart';
 
@@ -31,6 +32,9 @@ abstract class EditorCommon {
   void noteEditorChooserSelected(Note note);
   void moveNoteToFolderSelected(Note note);
   void exitEditorSelected(Note note);
+
+  void encryptNote(Note note);
+  void decryptNote(Note note);
 }
 
 abstract class EditorState with ChangeNotifier {
@@ -101,6 +105,21 @@ class EditorAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: <Widget>[
         if (extraButton != null) extraButton!,
+        IconButton(
+          icon: const Icon(Icons.copy),
+          tooltip: 'Copy content',
+          onPressed: () {
+            var note = editorState.getNote();
+            var content = note.body;
+            Clipboard.setData(ClipboardData(text: content));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Content copied to clipboard'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          },
+        ),
         IconButton(
           icon: allowEdits
               ? const Icon(Icons.remove_red_eye)

@@ -31,6 +31,10 @@ android {
         checkReleaseBuilds false
     }
 
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
     defaultConfig {
         applicationId "io.gitjournal.gitjournal"
         minSdkVersion flutter.minSdkVersion
@@ -53,11 +57,22 @@ android {
     }
 
     signingConfigs {
+        debug {
+            def debugKeystorePath = 'debug-keystore.jks'
+            def debugKeystoreFile = rootProject.file(debugKeystorePath)
+            if (debugKeystoreFile.exists()) {
+                storeFile debugKeystoreFile
+                storePassword System.getenv('DEBUG_KEYSTORE_PASSWORD') ?: 'gitjournal-debug-pass'
+                keyAlias System.getenv('DEBUG_KEY_ALIAS') ?: 'gitjournal-debug'
+                keyPassword System.getenv('DEBUG_KEY_PASSWORD') ?: 'gitjournal-debug-pass'
+            }
+        }
         release {
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile file(keystoreProperties['storeFile'])
-            storePassword keystoreProperties['storePassword']
+            // Use debug keystore for release builds (same as debug for OTA updates)
+            storeFile file('debug-keystore.jks')
+            storePassword System.getenv('KEYSTORE_PASSWORD') ?: System.getenv('DEBUG_KEYSTORE_PASSWORD') ?: 'gitjournal-debug-pass'
+            keyAlias System.getenv('KEY_ALIAS') ?: System.getenv('DEBUG_KEY_ALIAS') ?: 'gitjournal-debug'
+            keyPassword System.getenv('KEY_PASSWORD') ?: System.getenv('DEBUG_KEY_PASSWORD') ?: 'gitjournal-debug-pass'
         }
     }
     buildTypes {
@@ -68,6 +83,7 @@ android {
             }
         }
         debug {
+            signingConfig signingConfigs.debug
             ndk {
                 abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'
             }
@@ -77,7 +93,10 @@ android {
     dexOptions {
         preDexLibraries true
         jumboMode true
-        javaMaxHeapSize "12g"
+    }
+
+    packagingOptions {
+        pickFirst '**/libgo_git_dart.so'
     }
 }
 
@@ -85,9 +104,6 @@ flutter {
     source '../..'
 }
 
-// Are these required?
-// dependencies {
-//     testImplementation 'junit:junit:4.12'
-//     androidTestImplementation 'androidx.test:runner:1.1.0'
-//     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
-// }
+dependencies {
+    implementation 'androidx.multidex:multidex:2.0.1'
+}

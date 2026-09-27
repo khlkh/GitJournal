@@ -193,6 +193,7 @@ class SettingsStorageScreen extends StatelessWidget {
             enabled: !storageConfig.storeInternally,
           ),
         const ShareRepoTile(),
+        const CopyRepoTile(),
       ],
     );
 
@@ -207,6 +208,63 @@ class SettingsStorageScreen extends StatelessWidget {
         ),
       ),
       body: list,
+    );
+  }
+}
+
+class CopyRepoTile extends StatefulWidget {
+  const CopyRepoTile({super.key});
+
+  @override
+  State<CopyRepoTile> createState() => _CopyRepoTileState();
+}
+
+class _CopyRepoTileState extends State<CopyRepoTile> {
+  var _isCopying = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(context.loc.settingsStorageCopyRepo),
+      subtitle: Text(context.loc.settingsStorageCopyRepoSubtitle),
+      enabled: !_isCopying,
+      onTap: () async {
+        var dir = await FilePicker.platform.getDirectoryPath();
+        if (dir == null || dir.isEmpty) return;
+
+        if (!await _isDirWritable(dir)) {
+          if (mounted) {
+            showErrorMessageSnackbar(
+              context,
+              context.loc.settingsStorageNotWritable(dir),
+            );
+          }
+          return;
+        }
+
+        try {
+          setState(() {
+            _isCopying = true;
+          });
+          var repo = context.read<GitJournalRepo>();
+          await repo.copyRepoTo(dir);
+          if (mounted) {
+            showSnackbar(context, context.loc.settingsStorageCopyRepoDone);
+          }
+        } catch (e, st) {
+          Log.e("Copying Repo", ex: e, stacktrace: st);
+          if (mounted) {
+            showErrorMessageSnackbar(
+              context,
+              context.loc.failedToExport,
+            );
+          }
+        }
+
+        setState(() {
+          _isCopying = false;
+        });
+      },
     );
   }
 }

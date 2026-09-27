@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+SPDX-FileCopyrightText: 2019-2021 Vishesh Handa <me@vhanda.in>
+SPDX-License-Identifier: Apache-2.0
+
+Compact 1x1 widget layout: icon fills most of the cell with a small
+title label below it. Subtitle is hidden at 1x1 and appears when resized.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="4dp"
+    android:background="@drawable/widget_background">
+
+    <ImageView
+        android:id="@+id/widget_icon"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scaleType="centerInside"
+        android:src="@mipmap/launcher_icon"
+        android:contentDescription="@null" />
+
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/widget_repo_default_title"
+        android:textSize="9sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/widget_repo_default_subtitle"
+        android:textSize="8sp"
+        android:textColor="@android:color/white"
+        android:alpha="0.7"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:visibility="gone" />
+
+</LinearLayout>

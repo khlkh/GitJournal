@@ -44,6 +44,9 @@ class Note implements File {
 
   final File file;
 
+  final bool _isEncrypted;
+  final String? _encryptedBody;
+
   @override
   DateTime get fileLastModified => file.fileLastModified;
 
@@ -72,6 +75,8 @@ class Note implements File {
     required NoteSerializationSettings serializerSettings,
     required DateTime? modified,
     required DateTime? created,
+    bool isEncrypted = false,
+    String? encryptedBody,
   })  : _title = title != null ? (title.isEmpty ? null : title) : null,
         _body = body,
         _type = noteType,
@@ -81,7 +86,9 @@ class Note implements File {
         _propsList = propsList,
         _modified = modified,
         _created = created,
-        noteSerializer = NoteSerializer.fromConfig(serializerSettings);
+        noteSerializer = NoteSerializer.fromConfig(serializerSettings),
+        _isEncrypted = isEncrypted,
+        _encryptedBody = encryptedBody;
 
   static Note newNote(
     NotesFolderFS parent, {
@@ -314,6 +321,8 @@ class Note implements File {
     ISet<String>? tags,
     NoteFileFormat? fileFormat,
     File? file,
+    bool? isEncrypted,
+    String? encryptedBody,
   }) {
     if (filePath != null && filePath.startsWith('./')) {
       filePath = filePath.substring(2);
@@ -332,6 +341,8 @@ class Note implements File {
       tags: tags ?? this.tags,
       fileFormat: fileFormat ?? this.fileFormat,
       serializerSettings: noteSerializer.settings.clone(),
+      isEncrypted: isEncrypted ?? this.isEncrypted,
+      encryptedBody: encryptedBody ?? _encryptedBody,
     );
   }
 
@@ -368,6 +379,9 @@ class Note implements File {
   ISet<String> get tags => _tags;
   Map<String, dynamic> get extraProps => UnmodifiableMapView(_extraProps);
   IList<String> get propsList => _propsList;
+
+  bool get isEncrypted => _isEncrypted;
+  String? get encryptedBody => _encryptedBody;
 
   bool get canHaveMetadata {
     if (_fileFormat == NoteFileFormat.Txt ||

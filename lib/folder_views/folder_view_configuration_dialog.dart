@@ -27,42 +27,11 @@ class FolderViewConfigurationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var children = <Widget>[
-      SettingsHeader(context.loc.widgetsFolderViewHeaderOptionsHeading),
-      RadioListTile<StandardViewHeader>(
-        title: Text(context.loc.widgetsFolderViewHeaderOptionsTitleFileName),
-        value: StandardViewHeader.TitleOrFileName,
-        groupValue: headerType,
-        onChanged: onHeaderTypeChanged,
-      ),
-      RadioListTile<StandardViewHeader>(
-        title: Text(context.loc.widgetsFolderViewHeaderOptionsAuto),
-        value: StandardViewHeader.TitleGenerated,
-        groupValue: headerType,
-        onChanged: onHeaderTypeChanged,
-      ),
-      RadioListTile<StandardViewHeader>(
-        key: const ValueKey("ShowFileNameOnly"),
-        title: Text(context.loc.widgetsFolderViewHeaderOptionsFileName),
-        value: StandardViewHeader.FileName,
-        groupValue: headerType,
-        onChanged: onHeaderTypeChanged,
-      ),
-      SwitchListTile(
-        key: const ValueKey("SummaryToggle"),
-        title: Text(context.loc.widgetsFolderViewHeaderOptionsSummary),
-        value: showSummary,
-        onChanged: onShowSummaryChanged,
-      ),
-    ];
-
     return AlertDialog(
       title: GestureDetector(
         key: const ValueKey("Hack_Back"),
         child: Text(context.loc.widgetsFolderViewHeaderOptionsCustomize),
         onTap: () {
-          // Hack to get out of the dialog in the tests
-          // driver.findByType('ModalBarrier') doesn't seem to be working
           if (foundation.kDebugMode) {
             Navigator.of(context).pop();
           }
@@ -72,7 +41,37 @@ class FolderViewConfigurationDialog extends StatelessWidget {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: children,
+        children: [
+          SettingsHeader(context.loc.widgetsFolderViewHeaderOptionsHeading),
+          RadioGroup<StandardViewHeader>(
+            groupValue: headerType,
+            onChanged: onHeaderTypeChanged,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RadioListTile<StandardViewHeader>(
+                  title: Text(context.loc.widgetsFolderViewHeaderOptionsTitleFileName),
+                  value: StandardViewHeader.TitleOrFileName,
+                ),
+                RadioListTile<StandardViewHeader>(
+                  title: Text(context.loc.widgetsFolderViewHeaderOptionsAuto),
+                  value: StandardViewHeader.TitleGenerated,
+                ),
+                RadioListTile<StandardViewHeader>(
+                  key: const ValueKey("ShowFileNameOnly"),
+                  title: Text(context.loc.widgetsFolderViewHeaderOptionsFileName),
+                  value: StandardViewHeader.FileName,
+                ),
+              ],
+            ),
+          ),
+          SwitchListTile(
+            key: const ValueKey("SummaryToggle"),
+            title: Text(context.loc.widgetsFolderViewHeaderOptionsSummary),
+            value: showSummary,
+            onChanged: onShowSummaryChanged,
+          ),
+        ],
       ),
     );
   }

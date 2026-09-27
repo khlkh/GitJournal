@@ -275,12 +275,14 @@ class SettingsEditorType extends GjSetting {
   static const Checklist =
       SettingsEditorType(Lk.settingsEditorsChecklistEditor, "Checklist");
   static const Org = SettingsEditorType(Lk.settingsEditorsOrgEditor, "Org");
+  static const AppFlowy = SettingsEditorType(Lk.settingsEditorsMarkdownEditor, "AppFlowy");
   static const Default = Markdown;
 
   const SettingsEditorType(super.lk, super.str);
 
   static const options = <SettingsEditorType>[
     Markdown,
+    AppFlowy,
     Raw,
     Journal,
     Checklist,
@@ -307,6 +309,8 @@ class SettingsEditorType extends GjSetting {
         return EditorType.Checklist;
       case Org:
         return EditorType.Org;
+      case AppFlowy:
+        return EditorType.AppFlowy;
       default:
         assert(false, "Editor Type mismatch");
         return EditorType.Markdown;
@@ -325,6 +329,8 @@ class SettingsEditorType extends GjSetting {
         return SettingsEditorType.Journal;
       case EditorType.Org:
         return SettingsEditorType.Org;
+      case EditorType.AppFlowy:
+        return SettingsEditorType.AppFlowy;
     }
   }
 }

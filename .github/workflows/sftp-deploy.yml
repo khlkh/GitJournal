@@ -1,0 +1,225 @@
+# SPDX-FileCopyrightText: 2019-2021 Vishesh Handa <me@vhanda.in>
+#
+# SPDX-License-Identifier: Apache-2.0
+name: Build and Upload APK to SFTP
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+env:
+  GO_VERSION: '1.25'
+  GO_GIT_DART_REPO: 'weijia/go_git_dart'
+
+jobs:
+  Build-and-Upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Give more Disk Space
+        run: sudo rm -rf /usr/share/dotnet
+
+      - name: Checkout GitJournal
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "17"
+
+      - name: Get Flutter version from pubspec
+        run: |
+          set -e
+          FLUTTER_VERSION=$(cat pubspec.yaml | grep 'flutter:' | head -n 1 | awk '{ print $2 }' | tr -d '"' | cut -d "=" -f 2)
+          echo "FLUTTER_VERSION=${FLUTTER_VERSION}" >> $GITHUB_ENV
+          echo "Detected Flutter version: ${FLUTTER_VERSION}"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Setup Env
+        run: dart ./scripts/setup_env.dart
+
+      - name: Verify go_git_dart dependency
+        run: dart ./scripts/verify_go_git_dart.dart
+
+      - name: Flutter Doctor
+        run: flutter doctor -v
+
+      - name: Get Flutter Deps
+        run: flutter pub upgrade --suppress-analytics
+
+      # ============================================
+      # Build custom go_git_dart with malformed mode fix
+      # ============================================
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r25c
+
+      - name: Checkout forked go_git_dart
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.GO_GIT_DART_REPO }}
+          path: go_git_dart_fork
+          fetch-depth: 0
+
+      - name: Build go_git_dart Android binaries
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          set -eux
+          echo "=== Building go_git_dart Android binaries ==="
+          cd go_git_dart_fork/src
+          
+          # Update go.sum for new dependencies
+          go mod tidy
+
+          NDK_TOOLCHAIN="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64"
+          mkdir -p ../android/src/main/jniLibs/{arm64-v8a,armeabi-v7a,x86,x86_64}
+
+          export GOOS=android
+          export CGO_ENABLED=1
+          export CGO_LDFLAGS="-landroid"
+          ANDROID_SDK_VERSION=21
+
+          # Build for arm64-v8a
+          export GOARCH=arm64
+          export CC="$NDK_TOOLCHAIN/bin/aarch64-linux-android${ANDROID_SDK_VERSION}-clang"
+          export CXX="$NDK_TOOLCHAIN/bin/aarch64-linux-android${ANDROID_SDK_VERSION}-clang++"
+          go build -buildmode=c-shared -trimpath -o ../android/src/main/jniLibs/arm64-v8a/go_git_dart.so .
+
+          # Build for armeabi-v7a
+          export GOARCH=arm
+          export CC="$NDK_TOOLCHAIN/bin/armv7a-linux-androideabi${ANDROID_SDK_VERSION}-clang"
+          export CXX="$NDK_TOOLCHAIN/bin/armv7a-linux-androideabi${ANDROID_SDK_VERSION}-clang++"
+          go build -buildmode=c-shared -trimpath -o ../android/src/main/jniLibs/armeabi-v7a/go_git_dart.so .
+
+          # Build for x86
+          export GOARCH=386
+          export CC="$NDK_TOOLCHAIN/bin/i686-linux-android${ANDROID_SDK_VERSION}-clang"
+          export CXX="$NDK_TOOLCHAIN/bin/i686-linux-android${ANDROID_SDK_VERSION}-clang++"
+          go build -buildmode=c-shared -trimpath -o ../android/src/main/jniLibs/x86/go_git_dart.so .
+
+          # Build for x86_64
+          export GOARCH=amd64
+          export CC="$NDK_TOOLCHAIN/bin/x86_64-linux-android${ANDROID_SDK_VERSION}-clang"
+          export CXX="$NDK_TOOLCHAIN/bin/x86_64-linux-android${ANDROID_SDK_VERSION}-clang++"
+          go build -buildmode=c-shared -trimpath -o ../android/src/main/jniLibs/x86_64/go_git_dart.so .
+
+          echo "=== Build complete ==="
+
+      - name: Replace go_git_dart binaries in Flutter cache
+        run: |
+          # Find the actual go_git_dart cache directory (path includes a hash suffix)
+          PUB_CACHE_DIR=$(find $HOME/.pub-cache/git -maxdepth 1 -type d -name "go_git_dart*" | head -1)
+          if [ -n "$PUB_CACHE_DIR" ] && [ -d "$PUB_CACHE_DIR/android/src/main/jniLibs" ]; then
+            echo "Found go_git_dart cache at: $PUB_CACHE_DIR"
+            rm -rf "$PUB_CACHE_DIR/android/src/main/jniLibs"
+            cp -r go_git_dart_fork/android/src/main/jniLibs "$PUB_CACHE_DIR/android/src/main/"
+            echo "Replaced .so files in $PUB_CACHE_DIR"
+          else
+            echo "WARNING: go_git_dart cache not found, trying fallback"
+            PUB_CACHE="$HOME/.pub-cache/git/go_git_dart"
+            if [ -d "$PUB_CACHE/android/src/main/jniLibs" ]; then
+              rm -rf "$PUB_CACHE/android/src/main/jniLibs"
+              cp -r go_git_dart_fork/android/src/main/jniLibs "$PUB_CACHE/android/src/main/"
+              echo "Replaced .so files in fallback path"
+            else
+              echo "ERROR: Could not find go_git_dart cache directory"
+              find $HOME/.pub-cache/git -maxdepth 1 -type d -name "go_git_dart*" || true
+            fi
+          fi
+
+      - name: Decode debug keystore
+        run: |
+          echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > android/app/debug-keystore.jks
+          ls -la android/app/debug-keystore.jks
+
+      - name: Setup Release Keystore (if available)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > android/app/release-key.jks
+            echo "KEYSTORE_PATH=release-key.jks" >> $GITHUB_ENV
+            ls -la android/app/release-key.jks
+          else
+            echo "No release keystore, using debug keystore for release builds"
+          fi
+
+      - name: Build APK
+        env:
+          DEBUG_KEYSTORE_PASSWORD: ${{ secrets.DEBUG_KEYSTORE_PASSWORD }}
+          DEBUG_KEY_ALIAS: ${{ secrets.DEBUG_KEY_ALIAS }}
+          DEBUG_KEY_PASSWORD: ${{ secrets.DEBUG_KEY_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -eux
+          BUILD_NUM=$(git rev-list --count HEAD)
+          echo "Build Number: $BUILD_NUM"
+
+          # Do NOT use flutter clean - it causes pub to re-download old go_git_dart
+          # Just do a fresh build
+          flutter pub get --suppress-analytics
+
+          # Replace ALL go_git_dart .so files in pub cache
+          for dir in $(find $HOME/.pub-cache/git -maxdepth 1 -type d -name "go_git_dart*"); do
+            if [ -d "$dir/android/src/main/jniLibs" ]; then
+              echo "Replacing .so in: $dir"
+              rm -rf "$dir/android/src/main/jniLibs"
+              cp -r go_git_dart_fork/android/src/main/jniLibs "$dir/android/src/main/"
+            fi
+          done
+
+          # Also replace in .dart_tool if it exists
+          for dir in $(find .dart_tool -type d -name "go_git_dart*" 2>/dev/null); do
+            if [ -d "$dir/android/src/main/jniLibs" ]; then
+              echo "Replacing .so in .dart_tool: $dir"
+              rm -rf "$dir/android/src/main/jniLibs"
+              cp -r go_git_dart_fork/android/src/main/jniLibs "$dir/android/src/main/"
+            fi
+          done
+
+          flutter build apk --release --flavor dev \
+            --build-number="$BUILD_NUM"
+
+      - name: Prepare APK for upload
+        run: |
+          mkdir -p upload
+          BUILD_NUM=$(git rev-list --count HEAD)
+          cp build/app/outputs/flutter-apk/app-dev-release.apk "upload/gitjournal-v${BUILD_NUM}.apk"
+          ls -la upload/
+
+      - name: Upload APK to SFTP
+        uses: weijia/action-upload-sftp@master
+        with:
+          sftp-host: ${{ secrets.SFTP_HOST }}
+          sftp-port: ${{ secrets.SFTP_PORT }}
+          sftp-username: ${{ secrets.SFTP_USERNAME }}
+          sftp-password: ${{ secrets.SFTP_PASSWORD }}
+          source-path: upload/
+          remote-path: /home/github/apps/gitjournal/
+          cleanup-old-files: 'true'
+          max-keep-files: 5
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GitJournal-Debug-APK
+          path: build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: error
+          retention-days: 30

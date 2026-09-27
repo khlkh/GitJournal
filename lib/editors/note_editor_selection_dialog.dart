@@ -55,7 +55,14 @@ class NoteEditorSelectionDialog extends StatelessWidget {
             EditorType.Org,
             context.loc.settingsEditorsOrgEditor,
             FontAwesomeIcons.horseHead,
-          )
+          ),
+        if (editorSupported(fileFormat, EditorType.AppFlowy))
+          _buildTile(
+            context,
+            EditorType.AppFlowy,
+            'AppFlowy WYSIWYG',
+            FontAwesomeIcons.wandMagicSparkles,
+          ),
       ],
     );
 

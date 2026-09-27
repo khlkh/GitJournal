@@ -16,6 +16,11 @@ Future<int> main(List<String> args) async {
     );
   } catch (ex) {
     stderr.writeln(ex);
+    // Provide default keys when env.json is unavailable (e.g. no git-crypt key)
+    config = {
+      'analyticsUrl': null,
+      'sentry': null,
+    };
   }
 
   if (args.isNotEmpty) {

@@ -6,6 +6,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gitjournal/analytics/analytics.dart';
 import 'package:gitjournal/analytics/route_observer.dart';
@@ -20,10 +21,15 @@ import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/logger/logger.dart';
 import 'package:gitjournal/repository_manager.dart';
 import 'package:gitjournal/screens/error_screen.dart';
+import 'package:gitjournal/screens/home_screen.dart';
 import 'package:gitjournal/settings/app_config.dart';
 import 'package:gitjournal/settings/settings.dart';
 import 'package:gitjournal/settings/storage_config.dart';
 import 'package:gitjournal/themes.dart';
+import 'package:gitjournal/utils/debug_nav_observer.dart';
+import 'package:gitjournal/utils/debug_overlay.dart';
+import 'package:gitjournal/widgets/error_display.dart';
+import 'package:gitjournal/widgets/home_widget_service.dart';
 import 'package:hive/hive.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -108,17 +114,20 @@ class JournalApp extends StatefulWidget {
   JournalAppState createState() => JournalAppState();
 }
 
-class JournalAppState extends State<JournalApp> {
+class JournalAppState extends State<JournalApp> with WidgetsBindingObserver {
   final _navigatorKey = GlobalKey<NavigatorState>();
   String? _pendingShortcut;
+  String? _pendingRepoId;
 
   StreamSubscription? _intentDataStreamSubscription;
+  StreamSubscription? _widgetClickSubscription;
   var _sharedText = "";
   var _sharedImages = <String>[];
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     if (!Platform.isAndroid && !Platform.isIOS) {
       return;
@@ -159,6 +168,7 @@ class JournalAppState extends State<JournalApp> {
     });
 
     _initShareSubscriptions();
+    _initWidgetHandling();
   }
 
   void _afterBuild(BuildContext context) {
@@ -166,6 +176,11 @@ class JournalAppState extends State<JournalApp> {
       var routeName = AppRoute.NewNotePrefix + _pendingShortcut!;
       _navigatorKey.currentState!.pushNamed(routeName);
       _pendingShortcut = null;
+    }
+
+    if (_pendingRepoId != null) {
+      _switchToRepo(_pendingRepoId!);
+      _pendingRepoId = null;
     }
   }
 
@@ -243,15 +258,95 @@ class JournalAppState extends State<JournalApp> {
     });
   }
 
+  void _initWidgetHandling() {
+    if (!Platform.isAndroid && !Platform.isIOS) {
+      return;
+    }
+
+    HomeWidgetService.init();
+    Log.i("Widget: _initWidgetHandling called");
+
+    // Check if app was launched from a widget
+    HomeWidgetService.getInitialWidgetRepoId().then((repoId) {
+      Log.i("Widget: getInitialWidgetRepoId returned: $repoId");
+      if (repoId != null && repoId.isNotEmpty) {
+        Log.i("Widget: app launched from widget, repoId=$repoId, setting _pendingRepoId");
+        _pendingRepoId = repoId;
+        WidgetsBinding.instance
+            .addPostFrameCallback((_) => _afterBuild(context));
+      } else {
+        Log.i("Widget: app NOT launched from widget (repoId is null/empty)");
+      }
+    }).catchError((e) {
+      Log.e("Widget: getInitialWidgetRepoId error", ex: e);
+    });
+
+    // Listen for widget clicks while app is running
+    _widgetClickSubscription = HomeWidgetService.widgetRepoIdStream.listen((repoId) {
+      Log.i("Widget: widgetRepoIdStream received repoId: $repoId");
+      _switchToRepo(repoId);
+    });
+    Log.i("Widget: _initWidgetHandling done, stream subscription set up");
+  }
+
+  void _switchToRepo(String repoId) async {
+    var repoManager = context.read<RepositoryManager>();
+    if (!repoManager.repoIds.contains(repoId)) {
+      Log.e("Widget: repo not found: $repoId (available: ${repoManager.repoIds})");
+      return;
+    }
+
+    if (repoManager.currentId == repoId) {
+      Log.i("Widget: already on repo: $repoId");
+      return;
+    }
+
+    Log.i("Widget: switching to repo $repoId from ${repoManager.currentId}");
+    try {
+      await repoManager.setCurrentRepo(repoId);
+      Log.i("Widget: successfully switched to repo $repoId");
+    } catch (e, st) {
+      Log.e("Widget: failed to switch to repo $repoId", ex: e, stacktrace: st);
+    }
+  }
+
   @override
   void dispose() {
     _intentDataStreamSubscription?.cancel();
+    _widgetClickSubscription?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    Log.i("AppLifecycle: $state");
+
+    // Widget clicks while the app is running are handled by
+    // widgetRepoIdStream (set up in _initWidgetHandling).
+    // We do NOT call getInitialWidgetRepoId() here because on Android
+    // the launch intent persists across resumes, which would cause
+    // _switchToRepo → buildActiveRepository → _repo = null → grey screen
+    // on every app resume.
+  }
+
+  @override
   Widget build(BuildContext context) {
+    try {
+      return _buildApp(context);
+    } catch (e, st) {
+      Log.e("JournalApp build error", ex: e, stacktrace: st);
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: ErrorDisplay(error: e, stackTrace: st),
+      );
+    }
+  }
+
+  Widget _buildApp(BuildContext context) {
     var repo = widget.repoManager.currentRepo;
+    Log.d("JournalApp.build: repo=${repo?.id}, repoError=${widget.repoManager.currentRepoError}");
 
     // Repository.load can be quite slow, especially because of the 'git commit'
     // on booting
@@ -260,7 +355,17 @@ class JournalAppState extends State<JournalApp> {
     try {
       settings = context.watch<Settings>();
     } catch (_) {
-      return const SizedBox();
+      // This can happen during initial app boot before any repo is loaded,
+      // or after a repo deletion (clearExisting). Show a loading indicator
+      // instead of a blank screen.
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
     }
 
     // FIXME: Settings can be null in this case!
@@ -282,6 +387,7 @@ class JournalAppState extends State<JournalApp> {
     }
     var initialRoute =
         router != null ? router.initialRoute() : ErrorScreen.routePath;
+    Log.i("JournalApp: initialRoute=$initialRoute, repo=${repo?.id}, router=${router != null}");
 
     /*
 
@@ -346,12 +452,75 @@ class JournalAppState extends State<JournalApp> {
       navigatorObservers: <NavigatorObserver>[
         AnalyticsRouteObserver(),
         SentryNavigatorObserver(),
+        DebugNavigatorObserver.instance,
       ],
       initialRoute: initialRoute,
       debugShowCheckedModeBanner: false,
       //debugShowMaterialGrid: true,
       onGenerateRoute: (rs) {
+        var routeName = rs.name ?? "";
+
+        // Log EVERY route request at the very start
+        DebugNavigatorObserver.instance.logRouteRequest(routeName);
+        Log.i("onGenerateRoute: routeName='$routeName' (len=${routeName.length}, "
+            "bytes=${routeName.codeUnits.take(40).toList()})");
+        Log.i("  router=${router != null}, repo=${repo?.id}, "
+            "matchesRepoPrefix=${routeName.startsWith(AppRoute.RepoPrefix)}, "
+            "matchesDeepLink=${routeName.startsWith(AppRoute.RepoDeepLinkPrefix)}");
+
+        // Intercept deep-link routes pushed by Flutter's engine when
+        // the app is launched from a home-screen widget.
+        //
+        // The home_widget package creates a PendingIntent with
+        // Uri.parse("gitjournal://repo/{repoId}").  Flutter's engine
+        // extracts the *path* from the URI and pushes it as a route.
+        // So the actual route name can be any of:
+        //   "/repo/{repoId}"          (path from gitjournal://repo/{repoId})
+        //   "gitjournal://repo/{repoId}" (full URI in some Flutter versions)
+        //   "/{repoId}"               (path-only form, the most common)
+        //
+        // We detect all three forms and also check if the path segment
+        // matches a known repo ID.  The actual repo switching is handled
+        // by HomeWidgetService.widgetRepoIdStream, so we return a
+        // transparent route that removes itself immediately.
+        var isWidgetDeepLink = false;
+        var deepLinkRepoId = <String>[];
+
+        if (routeName.startsWith(AppRoute.RepoDeepLinkPrefix)) {
+          // "gitjournal://repo/{repoId}"
+          isWidgetDeepLink = true;
+          deepLinkRepoId.add(routeName.substring(AppRoute.RepoDeepLinkPrefix.length));
+        } else if (routeName.startsWith(AppRoute.RepoPrefix)) {
+          // "/repo/{repoId}"
+          isWidgetDeepLink = true;
+          deepLinkRepoId.add(routeName.substring(AppRoute.RepoPrefix.length));
+        } else if (routeName.length > 1 && routeName.startsWith('/')) {
+          // "/{repoId}" — check if the segment after '/' is a known repo ID
+          var segment = routeName.substring(1);
+          if (widget.repoManager.repoIds.contains(segment)) {
+            isWidgetDeepLink = true;
+            deepLinkRepoId.add(segment);
+          }
+        }
+
+        if (isWidgetDeepLink) {
+          var repoId = deepLinkRepoId.first;
+          Log.i("  -> INTERCEPTED as widget deep-link (repoId=$repoId), "
+              "returning _AutoRemoveRoute with repo switch");
+          return PageRouteBuilder(
+            settings: rs,
+            opaque: false,
+            pageBuilder: (_, __, ___) => _AutoRemoveRoute(
+              repoId: repoId,
+              repoManager: widget.repoManager,
+            ),
+            transitionsBuilder: (_, __, ___, child) => child,
+          );
+        }
+
         if (router == null || repo == null) {
+          Log.w("  -> router or repo is NULL, returning ErrorScreen. "
+              "router=$router, repo=${repo?.id}");
           return MaterialPageRoute(
             settings: rs,
             builder: (context) => const ErrorScreen(),
@@ -363,8 +532,82 @@ class JournalAppState extends State<JournalApp> {
           _sharedImages = [];
         });
 
+        Log.i("  -> generated route: ${r.runtimeType}");
         return r;
       },
+        // Wrap every route with a visible debug overlay so we can see
+        // navigation events on-screen during development. Only shown in
+        // debug builds.
+        builder: (context, child) {
+          final content = child ?? const SizedBox.shrink();
+          if (!kDebugMode) return content;
+          return DebugOverlay(child: content);
+        },
     );
   }
+}
+
+/// A transparent widget that removes its own route from the Navigator
+/// in the next frame and switches to the specified repo.  Used to
+/// "absorb" deep-link routes pushed by Flutter's engine when the app
+/// is launched from a home-screen widget.  The actual repo switching
+/// happens here as a fallback in case [HomeWidgetService.widgetRepoIdStream]
+/// doesn't fire or fires too late.
+class _AutoRemoveRoute extends StatefulWidget {
+  final String repoId;
+  final RepositoryManager repoManager;
+
+  const _AutoRemoveRoute({
+    required this.repoId,
+    required this.repoManager,
+  });
+
+  @override
+  State<_AutoRemoveRoute> createState() => _AutoRemoveRouteState();
+}
+
+class _AutoRemoveRouteState extends State<_AutoRemoveRoute> {
+  @override
+  void initState() {
+    super.initState();
+    Log.i("_AutoRemoveRoute: initState, repoId=${widget.repoId}");
+
+    // Switch repo immediately (non-blocking for the UI)
+    _switchRepo();
+
+    // Replace this transparent route with the home screen so the navigator
+    // stack is never left empty (which would show a black screen).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed(HomeScreen.routePath);
+      Log.i("_AutoRemoveRoute: replaced itself with HomeScreen route");
+    });
+  }
+
+  Future<void> _switchRepo() async {
+    var repoId = widget.repoId;
+    var repoManager = widget.repoManager;
+
+    if (!repoManager.repoIds.contains(repoId)) {
+      Log.e("_AutoRemoveRoute: repo not found: $repoId "
+          "(available: ${repoManager.repoIds})");
+      return;
+    }
+
+    if (repoManager.currentId == repoId) {
+      Log.i("_AutoRemoveRoute: already on repo $repoId, no switch needed");
+      return;
+    }
+
+    Log.i("_AutoRemoveRoute: switching from ${repoManager.currentId} to $repoId");
+    try {
+      await repoManager.setCurrentRepo(repoId);
+      Log.i("_AutoRemoveRoute: successfully switched to $repoId");
+    } catch (e, st) {
+      Log.e("_AutoRemoveRoute: failed to switch to $repoId", ex: e, stacktrace: st);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }

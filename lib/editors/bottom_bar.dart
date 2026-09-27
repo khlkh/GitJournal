@@ -216,6 +216,9 @@ class BottomMenuSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final note = editorState.getNote();
+    final isEncrypted = note.isEncrypted;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
@@ -240,6 +243,26 @@ class BottomMenuSheet extends StatelessWidget {
             shareNote(note);
           },
         ),
+        if (isEncrypted)
+          ListTile(
+            leading: const Icon(Icons.lock_open),
+            title: const Text('Decrypt Note'),
+            onTap: () {
+              var note = editorState.getNote();
+              Navigator.of(context).pop();
+              editor.common.decryptNote(note);
+            },
+          )
+        else
+          ListTile(
+            leading: const Icon(Icons.lock),
+            title: const Text('Encrypt Note'),
+            onTap: () {
+              var note = editorState.getNote();
+              Navigator.of(context).pop();
+              editor.common.encryptNote(note);
+            },
+          ),
         if (metaDataEditable && !readOnly)
           ProOverlay(
             child: ListTile(

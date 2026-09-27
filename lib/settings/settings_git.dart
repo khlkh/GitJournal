@@ -28,6 +28,65 @@ class SettingsGit extends StatelessWidget {
 
     var list = ListView(
       children: [
+        SettingsHeader(context.loc.settingsGitRepoInfo),
+        ListTile(
+          title: Text(context.loc.settingsGitRepoInfoId),
+          subtitle: Text(repo.id),
+          dense: true,
+        ),
+        ListTile(
+          title: Text(context.loc.settingsGitRepoInfoBranch),
+          subtitle: Text(repo.currentBranch ?? 'N/A'),
+          dense: true,
+        ),
+        ListTile(
+          title: Text(context.loc.settingsGitRepoInfoPath),
+          subtitle: Text(
+            repo.repoPath,
+            style: const TextStyle(
+              fontSize: 12,
+              fontFamily: 'monospace',
+            ),
+          ),
+          dense: true,
+        ),
+        ListTile(
+          title: Text(context.loc.settingsGitRepoInfoRemoteConfigured),
+          subtitle: Text(repo.remoteGitRepoConfigured
+              ? context.loc.settingsGitRepoInfoRemoteYes
+              : context.loc.settingsGitRepoInfoRemoteNo),
+          dense: true,
+        ),
+        FutureBuilder(
+          future: repo.remoteConfigs(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const SizedBox.shrink();
+            }
+            var configs = snapshot.data!;
+            return Column(
+              children: configs.map((config) {
+                return ListTile(
+                  title: Text('${context.loc.settingsGitRepoInfoRemoteUrl} (${config.name})'),
+                  subtitle: Text(
+                    config.url,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                  dense: true,
+                );
+              }).toList(),
+            );
+          },
+        ),
+        ListTile(
+          title: Text(context.loc.settingsGitRepoInfoPendingChanges),
+          subtitle: Text('${repo.numChanges}'),
+          dense: true,
+        ),
+        const Divider(),
         SettingsHeader(context.loc.settingsGitAuthor),
         const GitAuthor(),
         const GitAuthorEmail(),

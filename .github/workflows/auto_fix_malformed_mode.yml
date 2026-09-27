@@ -1,0 +1,162 @@
+# SPDX-FileCopyrightText: 2024 GitJournal Contributors
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+# This workflow automatically detects and fixes malformed mode issues
+# when cloning repositories from Gitee or other Git hosts.
+
+name: Auto Fix Malformed Mode
+
+on:
+  # Run on schedule to check for upstream updates
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+  
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'verify'
+        type: choice
+        options:
+          - verify
+          - sync_fork
+          - rebuild_binaries
+
+env:
+  GO_VERSION: '1.21'
+
+jobs:
+  verify-fix:
+    name: Verify Malformed Mode Fix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout GitJournal
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify go_git_dart dependency
+        run: dart ./scripts/verify_go_git_dart.dart
+
+      - name: Check go_git_dart fork is accessible
+        run: |
+          echo "Checking if weijia/go_git_dart is accessible..."
+          curl -s -o /dev/null -w "%{http_code}" https://api.github.com/repos/weijia/go_git_dart | grep -q "200" && echo "✓ Fork is accessible" || (echo "✗ Fork not accessible" && exit 1)
+
+  sync-fork:
+    name: Sync go_git_dart Fork
+    runs-on: ubuntu-latest
+    if: github.event.inputs.action == 'sync_fork'
+    steps:
+      - name: Checkout forked go_git_dart
+        uses: actions/checkout@v4
+        with:
+          repository: weijia/go_git_dart
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/GitJournal/go_git_dart.git
+          git fetch upstream
+
+      - name: Check for upstream changes
+        id: check_changes
+        run: |
+          git log HEAD..upstream/main --oneline > /tmp/changes.txt || true
+          if [ -s /tmp/changes.txt ]; then
+            echo "changes_found=true" >> $GITHUB_OUTPUT
+            echo "Changes found:"
+            cat /tmp/changes.txt
+          else
+            echo "changes_found=false" >> $GITHUB_OUTPUT
+            echo "No changes from upstream"
+          fi
+
+      - name: Merge upstream changes
+        if: steps.check_changes.outputs.changes_found == 'true'
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git merge upstream/main --no-edit || (echo "Merge conflict detected, manual intervention needed" && exit 1)
+          git push origin main
+          echo "✓ Synced with upstream"
+
+      - name: Re-apply malformed mode fix
+        if: steps.check_changes.outputs.changes_found == 'true'
+        run: |
+          # Check if our fix is still in place
+          if ! grep -q "setCoreFileModeFalse" src/internal/git/git.go; then
+            echo "WARNING: Malformed mode fix may have been lost in merge!"
+            echo "Please verify the fix is still present in src/internal/git/git.go"
+            exit 1
+          fi
+          echo "✓ Malformed mode fix is still present"
+
+  rebuild-binaries:
+    name: Rebuild go_git_dart Binaries
+    runs-on: ${{ matrix.os }}
+    if: github.event.inputs.action == 'rebuild_binaries'
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: android
+          - os: macos-latest
+            target: ios
+    steps:
+      - name: Checkout go_git_dart fork
+        uses: actions/checkout@v4
+        with:
+          repository: weijia/go_git_dart
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Setup Android NDK (for Android build)
+        if: matrix.target == 'android'
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r25c
+
+      - name: Build Android binaries
+        if: matrix.target == 'android'
+        run: |
+          cd src
+          ./build-android.sh
+
+      - name: Build iOS binaries
+        if: matrix.target == 'ios'
+        run: |
+          cd src
+          make ios
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: go_git_dart-${{ matrix.target }}-binaries
+          path: |
+            android/src/main/jniLibs/**/*.so
+            ios/**/*.a
+          retention-days: 30
+
+  notify-status:
+    name: Notify Status
+    needs: [verify-fix, sync-fork]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check job status
+        run: |
+          if [ "${{ needs.verify-fix.result }}" == "failure" ] || [ "${{ needs.sync-fork.result }}" == "failure" ]; then
+            echo "::error::Malformed mode fix verification failed!"
+            echo "Please check the workflow logs for details."
+            exit 1
+          fi
+          echo "✓ All checks passed"

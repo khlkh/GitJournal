@@ -11,6 +11,7 @@ import 'package:gitjournal/settings/settings.dart';
 import 'package:gitjournal/settings/storage_config.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:universal_io/io.dart' as io;
 
 class RepositoryManager with ChangeNotifier {
   var repoIds = <String>[];
@@ -39,15 +40,22 @@ class RepositoryManager with ChangeNotifier {
   Future<GitJournalRepo?> buildActiveRepository({
     bool loadFromCache = true,
     bool syncOnBoot = true,
+    bool clearExisting = false,
   }) async {
     var repoCacheDir = p.join(cacheDir, currentId);
 
-    _repo = null;
+    // When clearExisting is true (e.g. after deleting a repo), null out
+    // _repo immediately so the UI doesn't try to use deleted data.
+    // Otherwise, keep the old repo visible while loading the new one –
+    // this prevents a grey screen during repo switches from widgets.
     _repoError = null;
-    notifyListeners();
+    if (clearExisting) {
+      _repo = null;
+      notifyListeners();
+    }
 
     try {
-      _repo = await GitJournalRepo.load(
+      var newRepo = await GitJournalRepo.load(
         repoManager: this,
         gitBaseDir: gitBaseDir,
         cacheDir: repoCacheDir,
@@ -56,9 +64,13 @@ class RepositoryManager with ChangeNotifier {
         loadFromCache: loadFromCache,
         syncOnBoot: syncOnBoot,
       );
+      _repo = newRepo;
     } catch (ex, st) {
       Log.e("buildActiveRepo", ex: ex, stacktrace: st);
       _repoError = ex;
+      if (clearExisting) {
+        _repo = null;
+      }
       notifyListeners();
       return null;
     }
@@ -106,7 +118,7 @@ class RepositoryManager with ChangeNotifier {
     await _save();
 
     Log.i("Switching to repo with id: $id");
-    buildActiveRepository();
+    await buildActiveRepository();
   }
 
   Future<void> deleteCurrent() async {
@@ -125,7 +137,54 @@ class RepositoryManager with ChangeNotifier {
     currentId = repoIds[i];
 
     await _save();
-    await buildActiveRepository();
+    await buildActiveRepository(clearExisting: true);
+  }
+
+  Future<void> renameRepo(String id, String newName) async {
+    assert(repoIds.contains(id));
+    if (newName.isEmpty) return;
+
+    await pref.setString("${id}_$FOLDER_NAME_KEY", newName);
+    Log.i("Renamed repo $id to $newName");
+
+    notifyListeners();
+  }
+
+  Future<void> deleteRepo(String id) async {
+    assert(repoIds.contains(id));
+    Log.i("Deleting repo: $id");
+
+    // If deleting current repo, switch to another one first
+    if (currentId == id) {
+      await deleteCurrent();
+      return;
+    }
+
+    // Delete the repo data on disk
+    var repoDir = p.join(gitBaseDir, repoFolderName(id));
+    try {
+      var dir = io.Directory(repoDir);
+      if (await dir.exists()) {
+        await dir.delete(recursive: true);
+      }
+    } catch (e) {
+      Log.e("Failed to delete repo directory: $repoDir", ex: e);
+    }
+
+    // Clear shared preferences for this repo
+    var keysToRemove = <String>[];
+    for (var key in pref.getKeys()) {
+      if (key.startsWith("${id}_")) {
+        keysToRemove.add(key);
+      }
+    }
+    for (var key in keysToRemove) {
+      await pref.remove(key);
+    }
+
+    repoIds.remove(id);
+    await _save();
+    notifyListeners();
   }
 
   // Not sure when to call this!

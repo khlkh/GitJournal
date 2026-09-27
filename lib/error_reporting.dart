@@ -21,11 +21,20 @@ Future<void> initSentry() async {
   if (Sentry.isEnabled) {
     return;
   }
-  await SentryFlutter.init(
-    (options) {
-      options.dsn = Env.sentry;
-    },
-  );
+  try {
+    final sentryDsn = Env.sentry;
+    if (sentryDsn.isEmpty) {
+      Log.w("Sentry DSN not configured, skipping init");
+      return;
+    }
+    await SentryFlutter.init(
+      (options) {
+        options.dsn = sentryDsn;
+      },
+    );
+  } catch (e) {
+    Log.w("Failed to init Sentry: $e");
+  }
 }
 
 Future<SentryEvent> get _environmentEvent async {
@@ -148,6 +157,7 @@ Future<void> _captureSentryException(
   }
   try {
     await initSentry();
+    // ignore: deprecated_member_use
     final event = (await _environmentEvent).copyWith(
       throwable: exception,
       breadcrumbs: breadcrumbs,

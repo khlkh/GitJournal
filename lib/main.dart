@@ -16,6 +16,7 @@ import 'package:gitjournal/app.dart';
 import 'package:gitjournal/error_reporting.dart';
 import 'package:gitjournal/settings/app_config.dart';
 import 'package:gitjournal/utils/bloc_observer.dart';
+import 'package:gitjournal/widgets/error_display.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stack_trace/stack_trace.dart';
 
@@ -35,6 +36,9 @@ Future<void> _main() async {
   AppConfig.instance.load(pref);
 
   FlutterError.onError = flutterOnErrorHandler;
+  // Show a user-visible error screen (with copyable text) instead of the
+  // default grey screen for uncaught build errors.
+  installErrorDisplay();
 
   Isolate.current.addErrorListener(RawReceivePort((dynamic pair) async {
     var isolateError = pair as List<dynamic>;

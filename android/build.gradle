@@ -7,6 +7,13 @@ allprojects {
         google()
         mavenCentral()
     }
+    afterEvaluate { project ->
+        if (project.name == "receive_sharing_intent" && project.hasProperty("android")) {
+            project.android {
+                compileSdk 35
+            }
+        }
+    }
 }
 
 rootProject.buildDir = '../build'
@@ -15,6 +22,14 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(':app')
+
+    // Fix for receive_sharing_intent: apply kotlin-android plugin before
+    // its build.gradle is evaluated, so kotlin{} DSL block works
+    beforeEvaluate {
+        if (project.name == "receive_sharing_intent") {
+            project.apply plugin: "org.jetbrains.kotlin.android"
+        }
+    }
 }
 
 tasks.register("clean", Delete) {

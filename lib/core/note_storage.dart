@@ -7,6 +7,7 @@
 import 'dart:convert';
 
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
+import 'package:gitjournal/core/encryption/note_encryption.dart';
 import 'package:gitjournal/core/file/file_storage.dart';
 import 'package:gitjournal/core/markdown/md_yaml_doc.dart';
 import 'package:gitjournal/core/markdown/md_yaml_doc_codec.dart';
@@ -44,12 +45,24 @@ class NoteStorage {
     return contents;
   }
 
-  static Future<Note> save(Note note) async {
+  static Future<Note> save(Note note, {String? encryptionPassword}) async {
     assert(note.filePath.isNotEmpty);
     assert(note.fileName.isNotEmpty);
     assert(note.oid.isEmpty);
 
-    var contents = utf8.encode(serialize(note));
+    List<int> contents;
+    if (note.isEncrypted && encryptionPassword != null) {
+      // Re-encrypt the note content before saving
+      var plaintext = serialize(note);
+      var encryptedText = await NoteEncryption.encrypt(
+        plaintext,
+        encryptionPassword,
+        title: note.title,
+      );
+      contents = utf8.encode(encryptedText);
+    } else {
+      contents = utf8.encode(serialize(note));
+    }
 
     assert(note.fullFilePath.startsWith(p.separator));
 
@@ -66,6 +79,65 @@ class NoteStorage {
     );
 
     return note;
+  }
+
+  /// Decrypts an encrypted note and returns a Note with the decrypted content.
+  /// The returned note still has isEncrypted=true so it will be re-encrypted
+  /// on save.
+  static Future<Note> decryptNote(Note note, String password) async {
+    if (!note.isEncrypted) {
+      throw ArgumentError('Note is not encrypted');
+    }
+
+    var encryptedText = note.encryptedBody;
+    if (encryptedText == null || encryptedText.isEmpty) {
+      // Load from file if not cached
+      var file = io.File(note.fullFilePath);
+      encryptedText = await file.readAsString();
+    }
+
+    var plaintext = await NoteEncryption.decrypt(encryptedText, password);
+
+    // Deserialize the decrypted content
+    var parentFolder = note.parent;
+    var format = note.fileFormat;
+
+    if (format == NoteFileFormat.Markdown) {
+      var data = _serializer.decode(plaintext);
+      var settings = NoteSerializationSettings.fromConfig(parentFolder.config);
+      var noteSerializer = NoteSerializer.fromConfig(settings);
+      var decryptedNote = noteSerializer.decode(
+        data: data,
+        parent: parentFolder,
+        file: note.file,
+        fileFormat: format,
+      );
+      // Preserve encrypted flag and body for re-encryption
+      return decryptedNote.copyWith(
+        isEncrypted: true,
+        encryptedBody: encryptedText,
+        file: note.file,
+      );
+    } else {
+      // Txt or Org mode
+      return Note.build(
+        parent: parentFolder,
+        file: note.file,
+        title: null,
+        body: plaintext,
+        noteType: NoteType.Unknown,
+        tags: ISet(),
+        extraProps: const {},
+        fileFormat: format,
+        propsList: IList(),
+        serializerSettings:
+            NoteSerializationSettings.fromConfig(parentFolder.config),
+        created: null,
+        modified: null,
+        isEncrypted: true,
+        encryptedBody: encryptedText,
+      );
+    }
   }
 
   static final mdYamlDocLoader = MdYamlDocLoader();
@@ -88,10 +160,39 @@ class NoteStorage {
     assert(file.oid.isNotEmpty);
 
     var filePath = file.fullFilePath;
+
+    // Read raw content first to check for encryption
+    var rawContent = await io.File(filePath).readAsString();
+
+    // Check if this is an encrypted note
+    if (NoteEncryption.isEncryptedNote(rawContent)) {
+      Log.d("Loading encrypted note: ${file.filePath}");
+      // Extract title from PEM header (stored in plaintext for list display)
+      var title = NoteEncryption.extractTitle(rawContent);
+      var note = Note.build(
+        parent: parentFolder,
+        file: file,
+        title: title,
+        body: "",
+        noteType: NoteType.Unknown,
+        tags: ISet(),
+        extraProps: const {},
+        fileFormat: NoteFileFormat.Markdown,
+        propsList: IList(),
+        serializerSettings:
+            NoteSerializationSettings.fromConfig(parentFolder.config),
+        created: null,
+        modified: null,
+        isEncrypted: true,
+        encryptedBody: rawContent,
+      );
+      return note;
+    }
+
     var format = NoteFileFormatInfo.fromFilePath(filePath);
 
     if (format == NoteFileFormat.Markdown) {
-      var data = await mdYamlDocLoader.loadDoc(filePath);
+      var data = _serializer.decode(rawContent);
       var settings = NoteSerializationSettings.fromConfig(parentFolder.config);
       var noteSerializer = NoteSerializer.fromConfig(settings);
       var note = noteSerializer.decode(
@@ -106,7 +207,7 @@ class NoteStorage {
         parent: parentFolder,
         file: file,
         title: null,
-        body: await io.File(filePath).readAsString(),
+        body: rawContent,
         noteType: NoteType.Unknown,
         tags: ISet(),
         extraProps: const {},
@@ -123,7 +224,7 @@ class NoteStorage {
         parent: parentFolder,
         file: file,
         title: null,
-        body: await io.File(filePath).readAsString(),
+        body: rawContent,
         noteType: NoteType.Unknown,
         tags: ISet(),
         extraProps: const {},

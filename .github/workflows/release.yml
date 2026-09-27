@@ -1,0 +1,257 @@
+# SPDX-FileCopyrightText: 2019-2021 Vishesh Handa <me@vhanda.in>
+#
+# SPDX-License-Identifier: Apache-2.0
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.91.0)'
+        required: true
+        type: string
+
+env:
+  GO_VERSION: '1.25'
+  GO_GIT_DART_REPO: 'weijia/go_git_dart'
+
+jobs:
+  Build-Release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Give more Disk Space
+        run: sudo rm -rf /usr/share/dotnet
+
+      - name: Checkout GitJournal
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "17"
+
+      - name: Get Flutter version from pubspec
+        run: |
+          set -e
+          FLUTTER_VERSION=$(cat pubspec.yaml | grep 'flutter:' | head -n 1 | awk '{ print $2 }' | tr -d '"' | cut -d "=" -f 2)
+          echo "FLUTTER_VERSION=${FLUTTER_VERSION}" >> $GITHUB_ENV
+          echo "Detected Flutter version: ${FLUTTER_VERSION}"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Setup Env
+        run: dart ./scripts/setup_env.dart
+
+      - name: Verify go_git_dart dependency
+        run: dart ./scripts/verify_go_git_dart.dart
+
+      - name: Flutter Doctor
+        run: flutter doctor -v
+
+      - name: Get Flutter Deps
+        run: flutter pub get --suppress-analytics
+
+      # ============================================
+      # Build custom go_git_dart with malformed mode fix
+      # ============================================
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r25c
+
+      - name: Checkout forked go_git_dart
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.GO_GIT_DART_REPO }}
+          path: go_git_dart_fork
+          fetch-depth: 0
+
+      - name: Build go_git_dart Android binaries
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          GONOSUMCHECK: github.com/weijia/go-git/v5
+          GONOSUMDB: github.com/weijia/go-git/v5
+          GOFLAGS: -mod=mod
+        run: |
+          set -eux
+          echo "=== Building go_git_dart Android binaries ==="
+          echo "NDK Path: $ANDROID_NDK_HOME"
+          echo "Go version: $(go version)"
+
+          cd go_git_dart_fork/src
+
+          # Clear module cache to ensure fresh download of forked go-git
+          go clean -modcache
+
+          # Verify replace directive is active
+          echo "=== Verifying go-git replace directive ==="
+          go mod graph | grep go-git || true
+          grep replace go.mod || true
+
+          NDK_TOOLCHAIN="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64"
+          if [ ! -d "$NDK_TOOLCHAIN" ]; then
+            echo "ERROR: NDK toolchain not found at $NDK_TOOLCHAIN"
+            ls -la $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/ || true
+            exit 1
+          fi
+
+          mkdir -p ../android/src/main/jniLibs/{arm64-v8a,armeabi-v7a,x86,x86_64}
+
+          export GOOS=android
+          export CGO_ENABLED=1
+          ANDROID_SDK_VERSION=21
+
+          echo "Building for arm64-v8a..."
+          GOARCH=arm64 CC="$NDK_TOOLCHAIN/bin/aarch64-linux-android${ANDROID_SDK_VERSION}-clang" \
+            go build -buildmode=c-shared -trimpath -o ../android/src/main/jniLibs/arm64-v8a/go_git_dart.so .
+
+          echo "Building for armeabi-v7a..."
+          GOARCH=arm CC="$NDK_TOOLCHAIN/bin/armv7a-linux-androideabi${ANDROID_SDK_VERSION}-clang" \
+            go build -buildmode=c-shared -trimpath -o ../android/src/main/jniLibs/armeabi-v7a/go_git_dart.so .
+
+          echo "Building for x86..."
+          GOARCH=386 CC="$NDK_TOOLCHAIN/bin/i686-linux-android${ANDROID_SDK_VERSION}-clang" \
+            go build -buildmode=c-shared -trimpath -o ../android/src/main/jniLibs/x86/go_git_dart.so .
+
+          echo "Building for x86_64..."
+          GOARCH=amd64 CC="$NDK_TOOLCHAIN/bin/x86_64-linux-android${ANDROID_SDK_VERSION}-clang" \
+            go build -buildmode=c-shared -trimpath -o ../android/src/main/jniLibs/x86_64/go_git_dart.so .
+
+          echo "=== Build complete ==="
+          find ../android/src/main/jniLibs -name "*.so" -exec ls -lh {} \;
+
+      - name: Replace go_git_dart binaries everywhere
+        run: |
+          echo "=== Replacing go_git_dart binaries in all cache locations ==="
+
+          CUSTOM_LIBS="$GITHUB_WORKSPACE/go_git_dart_fork/android/src/main/jniLibs"
+          echo "Custom libs: $CUSTOM_LIBS"
+          ls -la $CUSTOM_LIBS/*/
+
+          replaced=0
+
+          # Method 1: Search pub cache
+          while IFS= read -r jniDir; do
+            if [ -z "$jniDir" ]; then
+              continue
+            fi
+            echo "  Found jniLibs at: $jniDir"
+            rm -rf "$jniDir"
+            parent=$(dirname "$jniDir")
+            cp -r "$CUSTOM_LIBS" "$parent/jniLibs"
+            echo "  ✓ Replaced!"
+            replaced=$((replaced + 1))
+          done < <(find / -type d -path "*/go_git_dart*/android/src/main/jniLibs" 2>/dev/null | grep -v "go_git_dart_fork")
+
+          echo "=== Total replacements: $replaced ==="
+          if [ "$replaced" -eq 0 ]; then
+            echo "WARNING: No jniLibs directories found to replace!"
+            echo "Listing all go_git_dart directories:"
+            find / -type d -name "go_git_dart" 2>/dev/null || true
+          fi
+
+      - name: Build Release APK
+        run: |
+          set -eux
+          
+          # Set version
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/v}
+          fi
+          BUILD_NUM=$(git rev-list --count HEAD)
+          echo "Version: $VERSION"
+          echo "Build Number: $BUILD_NUM"
+
+          # Do NOT use flutter clean - it causes pub to re-download old go_git_dart
+          flutter pub get --suppress-analytics
+
+          # Replace ALL go_git_dart .so files in pub cache
+          CUSTOM_LIBS="$GITHUB_WORKSPACE/go_git_dart_fork/android/src/main/jniLibs"
+          echo "=== Replacing go_git_dart binaries ==="
+          for dir in $(find $HOME/.pub-cache/git -maxdepth 1 -type d -name "go_git_dart*" 2>/dev/null); do
+            if [ -d "$dir/android/src/main/jniLibs" ]; then
+              echo "Replacing .so in: $dir"
+              rm -rf "$dir/android/src/main/jniLibs"
+              cp -r "$CUSTOM_LIBS" "$dir/android/src/main/jniLibs"
+            fi
+          done
+
+          # Also replace in .dart_tool if it exists
+          for dir in $(find .dart_tool -type d -name "go_git_dart*" 2>/dev/null); do
+            if [ -d "$dir/android/src/main/jniLibs" ]; then
+              echo "Replacing .so in .dart_tool: $dir"
+              rm -rf "$dir/android/src/main/jniLibs"
+              cp -r "$CUSTOM_LIBS" "$dir/android/src/main/jniLibs"
+            fi
+          done
+
+          # Build release APK
+          flutter build apk --release --flavor prod \
+            --build-name="$VERSION" \
+            --build-number="$BUILD_NUM"
+
+      - name: Verify APK Contents
+        run: |
+          echo "=== Verifying APK contents ==="
+          APK_DIR="build/app/outputs/flutter-apk"
+          ls -la $APK_DIR/
+
+          for apk in $APK_DIR/*release*.apk; do
+            echo "--- $apk ---"
+            unzip -l "$apk" | grep "go_git_dart" || true
+          done
+
+      - name: Rename APK with version
+        run: |
+          APK_DIR="build/app/outputs/flutter-apk"
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/v}
+          fi
+          
+          for apk in $APK_DIR/*release*.apk; do
+            if [ -f "$apk" ]; then
+              newname="GitJournal-${VERSION}-release.apk"
+              cp "$apk" "$APK_DIR/$newname"
+              echo "Created: $newname"
+            fi
+          done
+          ls -la $APK_DIR/
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GitJournal-Release-APK
+          path: build/app/outputs/flutter-apk/*release*.apk
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/app/outputs/flutter-apk/GitJournal-*.apk
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

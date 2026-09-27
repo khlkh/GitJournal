@@ -71,6 +71,15 @@
   "settingsDisplayImagesThemingVectorGraphics": "Vector Graphics (.svg)",
   "settingsDisplayImagesThemingVectorGraphicsAdjustColors": "Colors to Adjust",
   "settingsDisplayLang": "Language",
+  "settingsGitRepoInfo": "Git 仓库信息",
+  "settingsGitRepoInfoId": "仓库 ID",
+  "settingsGitRepoInfoBranch": "当前分支",
+  "settingsGitRepoInfoPath": "仓库路径",
+  "settingsGitRepoInfoRemoteConfigured": "远程仓库已配置",
+  "settingsGitRepoInfoRemoteYes": "是",
+  "settingsGitRepoInfoRemoteNo": "否",
+  "settingsGitRepoInfoRemoteUrl": "远程地址",
+  "settingsGitRepoInfoPendingChanges": "待提交更改",
   "settingsGitAuthor": "Git Author Settings",
   "settingsVersionInfo": "GitJournal Version",
   "settingsAnalytics": "Analytics",
@@ -234,6 +243,8 @@
   "settingsFileTypesNoExt": "No Extension",
   "settingsListUserInterfaceTitle": "User Interface",
   "settingsListUserInterfaceSubtitle": "Theme, Language, Home, Bottom Bar, Rendering",
+  "settingsListReposTitle": "Repositories",
+  "settingsListReposSubtitle": "Manage multiple Git repositories",
   "settingsListGitTitle": "Git",
   "settingsListGitSubtitle": "Git Author, Remote, Sync Frequency",
   "settingsListEditorTitle": "Editor",
@@ -430,6 +441,49 @@
   "drawerGraph": "Graph View",
   "drawerRemote": "No Git Host",
   "drawerAddRepo": "Add Repository",
+  "settingsReposTitle": "Repositories",
+  "settingsReposAddRepo": "Add Repository",
+  "settingsReposRepoName": "Repository Name",
+  "settingsReposRepoNameHint": "My Journal",
+  "settingsReposRepoNameError": "Please enter a name",
+  "settingsReposCurrentBadge": "Current",
+  "settingsReposRenameRepo": "Rename",
+  "settingsReposDeleteRepo": "Delete Repository",
+  "settingsReposDelete": "Delete",
+  "settingsReposDeleteWarning": "Are you sure you want to delete \"{name}\"? This cannot be undone.",
+  "@settingsReposDeleteWarning": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "My Journal"
+      }
+    }
+  },
+  "settingsReposDeleteCurrentWarning": "This is your current repository. Deleting it will switch you to another repository. Are you sure you want to delete \"{name}\"?",
+  "@settingsReposDeleteCurrentWarning": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "My Journal"
+      }
+    }
+  },
+  "settingsReposAddError": "Failed to add repository",
+  "settingsReposSwitchError": "Failed to switch repository",
+  "settingsReposRenameError": "Failed to rename repository",
+  "settingsReposDeleteError": "Failed to delete repository",
+  "settingsReposAddToHome": "Add to Home Screen",
+  "settingsReposWidgetAdded": "\"{name}\" added to home screen",
+  "@settingsReposWidgetAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "My Journal"
+      }
+    }
+  },
+  "settingsReposWidgetPinFailed": "Failed to pin widget to home screen",
+  "settingsReposWidgetError": "Failed to add widget",
   "drawerLogin": "Login",
   "drawerHistory": "History",
   "setupAutoConfigureTitle": "How do you want to do this?",

@@ -20,44 +20,32 @@ class FolderViewSelectionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var children = <Widget>[
-      RadioListTile<FolderViewType>(
-        title: Text(context.loc.widgetsFolderViewViewsStandard),
-        value: FolderViewType.Standard,
-        groupValue: viewType,
-        onChanged: onViewChange,
-      ),
-      RadioListTile<FolderViewType>(
-        title: Text(context.loc.widgetsFolderViewViewsJournal),
-        value: FolderViewType.Journal,
-        groupValue: viewType,
-        onChanged: onViewChange,
-      ),
-      RadioListTile<FolderViewType>(
-        title: Text(context.loc.widgetsFolderViewViewsGrid),
-        value: FolderViewType.Grid,
-        groupValue: viewType,
-        onChanged: onViewChange,
-      ),
-      RadioListTile<FolderViewType>(
-        title: Text(context.loc.widgetsFolderViewViewsCard),
-        value: FolderViewType.Card,
-        groupValue: viewType,
-        onChanged: onViewChange,
-      ),
-      // RadioListTile<FolderViewType>(
-      //   title: Text(context.loc.widgetsFolderViewViewsCalendar),
-      //   value: FolderViewType.Calendar,
-      //   groupValue: viewType,
-      //   onChanged: onViewChange,
-      // ),
-    ];
-
     return AlertDialog(
       title: Text(context.loc.widgetsFolderViewViewsSelect),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: children,
+      content: RadioGroup<FolderViewType>(
+        groupValue: viewType,
+        onChanged: onViewChange,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            RadioListTile<FolderViewType>(
+              title: Text(context.loc.widgetsFolderViewViewsStandard),
+              value: FolderViewType.Standard,
+            ),
+            RadioListTile<FolderViewType>(
+              title: Text(context.loc.widgetsFolderViewViewsJournal),
+              value: FolderViewType.Journal,
+            ),
+            RadioListTile<FolderViewType>(
+              title: Text(context.loc.widgetsFolderViewViewsGrid),
+              value: FolderViewType.Grid,
+            ),
+            RadioListTile<FolderViewType>(
+              title: Text(context.loc.widgetsFolderViewViewsCard),
+              value: FolderViewType.Card,
+            ),
+          ],
+        ),
       ),
     );
   }

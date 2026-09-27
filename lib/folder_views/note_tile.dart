@@ -57,14 +57,24 @@ class NoteTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           if (note.title != null)
-            HighlightedText(
-              text: note.title!,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: textTheme.titleLarge!
-                  .copyWith(fontSize: textTheme.titleLarge!.fontSize! * 0.8),
-              highlightText: searchTerm,
-              highlightTextLowerCase: searchTermLowerCase,
+            Row(
+              children: [
+                if (note.isEncrypted) ...[
+                  const Icon(Icons.lock, size: 18),
+                  const SizedBox(width: 6),
+                ],
+                Expanded(
+                  child: HighlightedText(
+                    text: note.title!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.titleLarge!
+                        .copyWith(fontSize: textTheme.titleLarge!.fontSize! * 0.8),
+                    highlightText: searchTerm,
+                    highlightTextLowerCase: searchTermLowerCase,
+                  ),
+                ),
+              ],
             ),
           if (note.title != null) const SizedBox(height: 8.0),
           if (note.title == null && note.type == NoteType.Journal)

@@ -563,6 +563,62 @@ abstract class AppLocalizations {
 
   /// No description provided for @settingsGitAuthor.
   ///
+  /// No description provided for @settingsGitRepoInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Git Repository Info'**
+  String get settingsGitRepoInfo;
+
+  /// No description provided for @settingsGitRepoInfoId.
+  ///
+  /// In en, this message translates to:
+  /// **'Repository ID'**
+  String get settingsGitRepoInfoId;
+
+  /// No description provided for @settingsGitRepoInfoBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Branch'**
+  String get settingsGitRepoInfoBranch;
+
+  /// No description provided for @settingsGitRepoInfoPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Repository Path'**
+  String get settingsGitRepoInfoPath;
+
+  /// No description provided for @settingsGitRepoInfoRemoteConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote Configured'**
+  String get settingsGitRepoInfoRemoteConfigured;
+
+  /// No description provided for @settingsGitRepoInfoRemoteYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get settingsGitRepoInfoRemoteYes;
+
+  /// No description provided for @settingsGitRepoInfoRemoteNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get settingsGitRepoInfoRemoteNo;
+
+  /// No description provided for @settingsGitRepoInfoRemoteUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote URL'**
+  String get settingsGitRepoInfoRemoteUrl;
+
+  /// No description provided for @settingsGitRepoInfoPendingChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Changes'**
+  String get settingsGitRepoInfoPendingChanges;
+
+  /// No description provided for @settingsGitAuthor.
+  ///
   /// In en, this message translates to:
   /// **'Git Author Settings'**
   String get settingsGitAuthor;
@@ -644,6 +700,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Debug Logs Copied'**
   String get settingsDebugCopy;
+
+  /// No description provided for @settingsDebugClearTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Logs'**
+  String get settingsDebugClearTitle;
+
+  /// No description provided for @settingsDebugClearMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to clear all logs?'**
+  String get settingsDebugClearMessage;
+
+  /// No description provided for @settingsDebugClearDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs Cleared'**
+  String get settingsDebugClearDone;
 
   /// No description provided for @settingsImagesTitle.
   ///
@@ -1449,6 +1523,18 @@ abstract class AppLocalizations {
   /// **'Theme, Language, Home, Bottom Bar, Rendering'**
   String get settingsListUserInterfaceSubtitle;
 
+  /// No description provided for @settingsListReposTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Repositories'**
+  String get settingsListReposTitle;
+
+  /// No description provided for @settingsListReposSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage multiple Git repositories'**
+  String get settingsListReposSubtitle;
+
   /// No description provided for @settingsListGitTitle.
   ///
   /// In en, this message translates to:
@@ -2235,6 +2321,120 @@ abstract class AppLocalizations {
   /// **'Add Repository'**
   String get drawerAddRepo;
 
+  /// No description provided for @settingsReposTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Repositories'**
+  String get settingsReposTitle;
+
+  /// No description provided for @settingsReposAddRepo.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Repository'**
+  String get settingsReposAddRepo;
+
+  /// No description provided for @settingsReposRepoName.
+  ///
+  /// In en, this message translates to:
+  /// **'Repository Name'**
+  String get settingsReposRepoName;
+
+  /// No description provided for @settingsReposRepoNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'My Journal'**
+  String get settingsReposRepoNameHint;
+
+  /// No description provided for @settingsReposRepoNameError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a name'**
+  String get settingsReposRepoNameError;
+
+  /// No description provided for @settingsReposCurrentBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get settingsReposCurrentBadge;
+
+  /// No description provided for @settingsReposRenameRepo.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get settingsReposRenameRepo;
+
+  /// No description provided for @settingsReposDeleteRepo.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Repository'**
+  String get settingsReposDeleteRepo;
+
+  /// No description provided for @settingsReposDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get settingsReposDelete;
+
+  /// No description provided for @settingsReposDeleteWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{name}\"? This cannot be undone.'**
+  String settingsReposDeleteWarning(String name);
+
+  /// No description provided for @settingsReposDeleteCurrentWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This is your current repository. Deleting it will switch you to another repository. Are you sure you want to delete \"{name}\"?'**
+  String settingsReposDeleteCurrentWarning(String name);
+
+  /// No description provided for @settingsReposAddError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to add repository'**
+  String get settingsReposAddError;
+
+  /// No description provided for @settingsReposSwitchError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to switch repository'**
+  String get settingsReposSwitchError;
+
+  /// No description provided for @settingsReposRenameError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to rename repository'**
+  String get settingsReposRenameError;
+
+  /// No description provided for @settingsReposDeleteError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete repository'**
+  String get settingsReposDeleteError;
+
+  /// No description provided for @settingsReposAddToHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Home Screen'**
+  String get settingsReposAddToHome;
+
+  /// No description provided for @settingsReposWidgetAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" added to home screen'**
+  String settingsReposWidgetAdded(String name);
+
+  /// No description provided for @settingsReposWidgetPinFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to pin widget to home screen'**
+  String get settingsReposWidgetPinFailed;
+
+  /// No description provided for @settingsReposWidgetError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to add widget'**
+  String get settingsReposWidgetError;
+
   /// No description provided for @drawerLogin.
   ///
   /// In en, this message translates to:
@@ -2648,6 +2848,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Export Repository'**
   String get exportRepo;
+
+  /// No description provided for @settingsStorageCopyRepo.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Repo to Directory'**
+  String get settingsStorageCopyRepo;
+
+  /// No description provided for @settingsStorageCopyRepoSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy entire repo including .git to a selected directory'**
+  String get settingsStorageCopyRepoSubtitle;
+
+  /// No description provided for @settingsStorageCopyRepoDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Repo Copied'**
+  String get settingsStorageCopyRepoDone;
 
   /// No description provided for @shareAsZip.
   ///

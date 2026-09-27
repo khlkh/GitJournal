@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">GitJournal</string>
+    <string name="widget_repo_description">GitJournal Repository Shortcut</string>
+    <string name="widget_repo_default_title">My Repository</string>
+    <string name="widget_repo_default_subtitle">Tap to open</string>
 </resources>

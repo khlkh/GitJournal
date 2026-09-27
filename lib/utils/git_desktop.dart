@@ -36,7 +36,7 @@ Future<void> gitCloneViaExecutable({
       repoPath: null,
       privateKey: privateKey,
       privateKeyPassword: privateKeyPassword,
-      args: ["clone", cloneUrl, repoPath],
+      args: ["-c", "core.fileMode=false", "clone", cloneUrl, repoPath],
     );
 
 Future<void> gitPushViaExecutable({

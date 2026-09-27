@@ -66,6 +66,10 @@ class _DebugScreenState extends State<DebugScreen> {
         ),
         actions: <Widget>[
           IconButton(
+            icon: const Icon(Icons.delete_sweep),
+            onPressed: _clearLogs,
+          ),
+          IconButton(
             icon: const Icon(Icons.copy),
             onPressed: _copyToClipboard,
           ),
@@ -143,6 +147,35 @@ class _DebugScreenState extends State<DebugScreen> {
       }
 
       yield _buildLogWidget(msg);
+    }
+  }
+
+  Future<void> _clearLogs() async {
+    var confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.loc.settingsDebugClearTitle),
+        content: Text(context.loc.settingsDebugClearMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(context.loc.settingsCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(context.loc.settingsOk),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await Log.clearLogs();
+      setState(() {
+        _logs = Log.fetchLogs().toList();
+      });
+      if (mounted) {
+        showSnackbar(context, context.loc.settingsDebugClearDone);
+      }
     }
   }
 

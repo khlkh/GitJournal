@@ -71,6 +71,15 @@
   "settingsDisplayImagesThemingVectorGraphics": "矢量图形（.svg）",
   "settingsDisplayImagesThemingVectorGraphicsAdjustColors": "要调整的颜色",
   "settingsDisplayLang": "语言",
+  "settingsGitRepoInfo": "Git 仓库信息",
+  "settingsGitRepoInfoId": "仓库 ID",
+  "settingsGitRepoInfoBranch": "当前分支",
+  "settingsGitRepoInfoPath": "仓库路径",
+  "settingsGitRepoInfoRemoteConfigured": "远程仓库已配置",
+  "settingsGitRepoInfoRemoteYes": "是",
+  "settingsGitRepoInfoRemoteNo": "否",
+  "settingsGitRepoInfoRemoteUrl": "远程地址",
+  "settingsGitRepoInfoPendingChanges": "待提交更改",
   "settingsGitAuthor": "Git 作者设置",
   "settingsVersionInfo": "GitJournal 版本",
   "settingsAnalytics": "统计分析",
@@ -232,6 +241,8 @@
   "settingsFileTypesNoExt": "无扩展名",
   "settingsListUserInterfaceTitle": "用户界面",
   "settingsListUserInterfaceSubtitle": "主题、语言、主页、底栏、渲染",
+  "settingsListReposTitle": "仓库",
+  "settingsListReposSubtitle": "管理多个 Git 仓库",
   "settingsListGitTitle": "Git",
   "settingsListGitSubtitle": "Git 作者、远程、同步频率",
   "settingsListEditorTitle": "编辑器",
@@ -428,6 +439,49 @@
   "drawerGraph": "图形视图",
   "drawerRemote": "无 Git 主机",
   "drawerAddRepo": "添加仓库",
+  "settingsReposTitle": "仓库管理",
+  "settingsReposAddRepo": "添加仓库",
+  "settingsReposRepoName": "仓库名称",
+  "settingsReposRepoNameHint": "我的笔记",
+  "settingsReposRepoNameError": "请输入名称",
+  "settingsReposCurrentBadge": "当前",
+  "settingsReposRenameRepo": "重命名",
+  "settingsReposDeleteRepo": "删除仓库",
+  "settingsReposDelete": "删除",
+  "settingsReposDeleteWarning": "确定要删除「{name}」吗？此操作无法撤销。",
+  "@settingsReposDeleteWarning": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "My Journal"
+      }
+    }
+  },
+  "settingsReposDeleteCurrentWarning": "这是你当前使用的仓库。删除后将自动切换到另一个仓库。确定要删除「{name}」吗？",
+  "@settingsReposDeleteCurrentWarning": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "My Journal"
+      }
+    }
+  },
+  "settingsReposAddError": "添加仓库失败",
+  "settingsReposSwitchError": "切换仓库失败",
+  "settingsReposRenameError": "重命名仓库失败",
+  "settingsReposDeleteError": "删除仓库失败",
+  "settingsReposAddToHome": "添加到主屏幕",
+  "settingsReposWidgetAdded": "已将\"{name}\"添加到主屏幕",
+  "@settingsReposWidgetAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "My Journal"
+      }
+    }
+  },
+  "settingsReposWidgetPinFailed": "添加小组件到主屏幕失败",
+  "settingsReposWidgetError": "添加小组件失败",
   "drawerLogin": "登录",
   "drawerHistory": "历史",
   "setupAutoConfigureTitle": "你想怎么做？",

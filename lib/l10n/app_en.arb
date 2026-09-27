@@ -71,6 +71,15 @@
   "settingsDisplayImagesThemingVectorGraphics": "Vector Graphics (.svg)",
   "settingsDisplayImagesThemingVectorGraphicsAdjustColors": "Colors to Adjust",
   "settingsDisplayLang": "Language",
+  "settingsGitRepoInfo": "Git Repository Info",
+  "settingsGitRepoInfoId": "Repository ID",
+  "settingsGitRepoInfoBranch": "Current Branch",
+  "settingsGitRepoInfoPath": "Repository Path",
+  "settingsGitRepoInfoRemoteConfigured": "Remote Configured",
+  "settingsGitRepoInfoRemoteYes": "Yes",
+  "settingsGitRepoInfoRemoteNo": "No",
+  "settingsGitRepoInfoRemoteUrl": "Remote URL",
+  "settingsGitRepoInfoPendingChanges": "Pending Changes",
   "settingsGitAuthor": "Git Author Settings",
   "settingsVersionInfo": "GitJournal Version",
   "settingsAnalytics": "Analytics",
@@ -85,6 +94,9 @@
   "settingsDebugLevelsDebug": "Debug",
   "settingsDebugLevelsVerbose": "Verbose",
   "settingsDebugCopy": "Debug Logs Copied",
+  "settingsDebugClearTitle": "Clear Logs",
+  "settingsDebugClearMessage": "Are you sure you want to clear all logs?",
+  "settingsDebugClearDone": "Logs Cleared",
   "settingsImagesTitle": "Image Settings",
   "settingsImagesSubtitle": "Configure how Images are stored",
   "settingsImagesImageLocation": "Image Location",
@@ -234,6 +246,8 @@
   "settingsFileTypesNoExt": "No Extension",
   "settingsListUserInterfaceTitle": "User Interface",
   "settingsListUserInterfaceSubtitle": "Theme, Language, Home, Bottom Bar, Rendering",
+  "settingsListReposTitle": "Repositories",
+  "settingsListReposSubtitle": "Manage multiple Git repositories",
   "settingsListGitTitle": "Git",
   "settingsListGitSubtitle": "Git Author, Remote, Sync Frequency",
   "settingsListEditorTitle": "Editor",
@@ -433,6 +447,49 @@
   "drawerGraph": "Graph View",
   "drawerRemote": "No Git Host",
   "drawerAddRepo": "Add Repository",
+  "settingsReposTitle": "Repositories",
+  "settingsReposAddRepo": "Add Repository",
+  "settingsReposRepoName": "Repository Name",
+  "settingsReposRepoNameHint": "My Journal",
+  "settingsReposRepoNameError": "Please enter a name",
+  "settingsReposCurrentBadge": "Current",
+  "settingsReposRenameRepo": "Rename",
+  "settingsReposDeleteRepo": "Delete Repository",
+  "settingsReposDelete": "Delete",
+  "settingsReposDeleteWarning": "Are you sure you want to delete \"{name}\"? This cannot be undone.",
+  "@settingsReposDeleteWarning": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "My Journal"
+      }
+    }
+  },
+  "settingsReposDeleteCurrentWarning": "This is your current repository. Deleting it will switch you to another repository. Are you sure you want to delete \"{name}\"?",
+  "@settingsReposDeleteCurrentWarning": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "My Journal"
+      }
+    }
+  },
+  "settingsReposAddError": "Failed to add repository",
+  "settingsReposSwitchError": "Failed to switch repository",
+  "settingsReposRenameError": "Failed to rename repository",
+  "settingsReposDeleteError": "Failed to delete repository",
+  "settingsReposAddToHome": "Add to Home Screen",
+  "settingsReposWidgetAdded": "\"{name}\" added to home screen",
+  "@settingsReposWidgetAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "My Journal"
+      }
+    }
+  },
+  "settingsReposWidgetPinFailed": "Failed to pin widget to home screen",
+  "settingsReposWidgetError": "Failed to add widget",
   "drawerLogin": "Login",
   "drawerHistory": "History",
   "setupAutoConfigureTitle": "How do you want to do this?",
@@ -512,6 +569,9 @@
   "onBoardingPage3": "Sync your Local Git Repo with any provider",
   "singleJournalEntry": "Single Journal Entry File per day",
   "exportRepo": "Export Repository",
+  "settingsStorageCopyRepo": "Copy Repo to Directory",
+  "settingsStorageCopyRepoSubtitle": "Copy entire repo including .git to a selected directory",
+  "settingsStorageCopyRepoDone": "Repo Copied",
   "shareAsZip": "Share as a ZIP file",
   "failedToExport": "Failed to Export"
 }

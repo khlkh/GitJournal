@@ -26,6 +26,7 @@ import 'package:gitjournal/settings/settings.dart';
 import 'package:gitjournal/utils/utils.dart';
 import 'package:gitjournal/widgets/app_bar_menu_button.dart';
 import 'package:gitjournal/widgets/app_drawer.dart';
+import 'package:gitjournal/widgets/encrypted_note_viewer.dart';
 import 'package:gitjournal/widgets/folder_selection_dialog.dart';
 import 'package:gitjournal/widgets/new_note_nav_bar.dart';
 import 'package:gitjournal/widgets/note_delete_dialog.dart';
@@ -229,8 +230,17 @@ class _FolderViewState extends State<FolderView> {
     }
   }
 
-  void _noteTapped(Note note) {
+  Future<void> _noteTapped(Note note) async {
     if (!inSelectionMode) {
+      // For encrypted notes, show a read-only viewer first
+      if (note.isEncrypted) {
+        final password = await EncryptedNoteViewer.show(context, note);
+        if (password != null && mounted) {
+          openNoteEditor(context, note, widget.notesFolder,
+              encryptionPassword: password);
+        }
+        return;
+      }
       openNoteEditor(context, note, widget.notesFolder);
       return;
     }

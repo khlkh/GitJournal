@@ -24,6 +24,7 @@ import 'package:gitjournal/editors/common.dart';
 import 'package:gitjournal/editors/common_types.dart';
 import 'package:gitjournal/editors/journal_editor.dart';
 import 'package:gitjournal/editors/markdown_editor.dart';
+import 'package:gitjournal/editors/appflowy_note_editor.dart';
 import 'package:gitjournal/editors/note_editor_selection_dialog.dart';
 import 'package:gitjournal/editors/org_editor.dart';
 import 'package:gitjournal/editors/raw_editor.dart';
@@ -37,6 +38,7 @@ import 'package:gitjournal/widgets/folder_selection_dialog.dart';
 import 'package:gitjournal/widgets/note_delete_dialog.dart';
 import 'package:gitjournal/widgets/note_tag_editor.dart';
 import 'package:gitjournal/widgets/rename_dialog.dart';
+import 'package:gitjournal/widgets/encrypted_password_dialog.dart';
 import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
 import 'package:synchronized/synchronized.dart';
@@ -66,12 +68,14 @@ class NoteEditor extends StatefulWidget {
   final bool editMode;
 
   final String? highlightString;
+  final String? encryptionPassword;
 
   NoteEditor.fromNote(
     Note note,
     this.parentFolderView, {
     this.editMode = false,
     this.highlightString,
+    this.encryptionPassword,
   })  : existingNote = note,
         notesFolder = note.parent,
         defaultEditorType = null,
@@ -94,7 +98,8 @@ class NoteEditor extends StatefulWidget {
     this.defaultFileFormat,
   })  : existingNote = null,
         editMode = true,
-        highlightString = null;
+        highlightString = null,
+        encryptionPassword = null;
 
   @override
   NoteEditorState createState() {
@@ -134,8 +139,11 @@ class NoteEditorState extends State<NoteEditor>
   MdYamlDoc _originalNoteData = MdYamlDoc();
   GitHash? _originalNoteOid;
 
+  String? _encryptionPassword;
+
   final _rawEditorKey = GlobalKey<RawEditorState>();
   final _markdownEditorKey = GlobalKey<MarkdownEditorState>();
+  final _appFlowyEditorKey = GlobalKey<AppFlowyNoteEditorState>();
   final _checklistEditorKey = GlobalKey<ChecklistEditorState>();
   final _journalEditorKey = GlobalKey<JournalEditorState>();
   final _orgEditorKey = GlobalKey<OrgEditorState>();
@@ -219,6 +227,79 @@ class NoteEditorState extends State<NoteEditor>
           break;
       }
     }
+
+    // If note is encrypted, decrypt it
+    if (_note.isEncrypted) {
+      if (widget.encryptionPassword != null) {
+        // Password provided by caller (e.g. from EncryptedNoteViewer)
+        _encryptionPassword = widget.encryptionPassword;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _decryptWithPassword(widget.encryptionPassword!);
+        });
+      } else {
+        // No password provided, prompt user
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _promptDecryptPassword();
+        });
+      }
+    }
+  }
+
+  /// Decrypts the note with a known password (no dialog).
+  Future<void> _decryptWithPassword(String password) async {
+    if (!mounted) return;
+
+    try {
+      var decryptedNote = await NoteStorage.decryptNote(_note, password);
+      if (mounted) {
+        setState(() {
+          _note = decryptedNote;
+          _encryptionPassword = password;
+          _originalNoteOid = decryptedNote.oid;
+          _originalNoteData = decryptedNote.data;
+        });
+      }
+    } catch (e, st) {
+      Log.e("Failed to decrypt note with provided password",
+          ex: e, stacktrace: st);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Decryption failed: $e')),
+        );
+        Navigator.of(context).pop();
+      }
+    }
+  }
+
+  Future<void> _promptDecryptPassword() async {
+    if (!mounted) return;
+
+    final password = await EncryptedPasswordDialog.showDecrypt(context);
+    if (password == null) {
+      // User cancelled - go back
+      if (mounted) Navigator.of(context).pop();
+      return;
+    }
+
+    try {
+      var decryptedNote = await NoteStorage.decryptNote(_note, password);
+      if (mounted) {
+        setState(() {
+          _note = decryptedNote;
+          _encryptionPassword = password;
+          _originalNoteOid = decryptedNote.oid;
+          _originalNoteData = decryptedNote.data;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Wrong password: $e')),
+        );
+        // Retry
+        _promptDecryptPassword();
+      }
+    }
   }
 
   @override
@@ -243,7 +324,8 @@ class NoteEditorState extends State<NoteEditor>
       var repo = context.read<GitJournalRepo>();
       () async {
         try {
-          await repo.saveNoteToDisk(note);
+          await repo.saveNoteToDisk(note,
+              encryptionPassword: note.isEncrypted ? _encryptionPassword : null);
         } catch (ex) {
           Log.e("Failed to save note", ex: ex);
         }
@@ -329,11 +411,25 @@ class NoteEditorState extends State<NoteEditor>
           common: this,
           readOnly: readOnly,
         );
+      case EditorType.AppFlowy:
+        return AppFlowyNoteEditor(
+          key: _appFlowyEditorKey,
+          note: note,
+          parentFolder: widget.parentFolderView,
+          noteModified: _noteModified(note),
+          editMode: widget.editMode,
+          highlightString: widget.highlightString,
+          theme: Theme.of(context),
+          common: this,
+        );
     }
   }
 
   @override
-  Future<void> noteEditorChooserSelected(Note note) async {
+  void noteEditorChooserSelected(Note note) =>
+      _lockAndCall(_noteEditorChooserSelected, note);
+
+  Future<void> _noteEditorChooserSelected(Note note) async {
     assert(note.oid.isEmpty);
 
     var newEditorType = await showDialog<EditorType>(
@@ -381,6 +477,96 @@ class NoteEditorState extends State<NoteEditor>
 
   @override
   void renameNote(Note note) => _lockAndCall(_renameNote, note);
+
+  @override
+  void encryptNote(Note note) => _lockAndCall(_encryptNote, note);
+
+  Future<void> _encryptNote(Note note) async {
+    if (note.isEncrypted) return;
+
+    final password = await EncryptedPasswordDialog.showEncrypt(context);
+    if (password == null) return;
+
+    try {
+      // Get current note content from editor
+      var currentNote = _getNoteFromEditor() ?? note;
+      if (currentNote.isEncrypted) return;
+
+      // Mark as encrypted and save (NoteStorage will encrypt with the password)
+      var encryptedNote = currentNote.copyWith(isEncrypted: true).resetOid();
+
+      var repo = context.read<GitJournalRepo>();
+      Note savedNote;
+      if (_isNewNote) {
+        savedNote = await repo.addNote(encryptedNote,
+            encryptionPassword: password);
+      } else {
+        savedNote = await repo.updateNote(currentNote, encryptedNote,
+            encryptionPassword: password);
+      }
+
+      if (mounted) {
+        setState(() {
+          _note = savedNote;
+          _encryptionPassword = password;
+          _originalNoteOid = savedNote.oid;
+          _originalNoteData = savedNote.data;
+        });
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Note encrypted')),
+      );
+    } catch (e, st) {
+      Log.e("Encrypt note failed", ex: e, stacktrace: st);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to encrypt: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  void decryptNote(Note note) => _lockAndCall(_decryptNote, note);
+
+  Future<void> _decryptNote(Note note) async {
+    if (!note.isEncrypted) return;
+
+    final password = await EncryptedPasswordDialog.showDecrypt(context);
+    if (password == null) return;
+
+    try {
+      // Decrypt the note content
+      var decryptedNote = await NoteStorage.decryptNote(note, password);
+
+      // Remove encryption flag and save
+      var plainNote = decryptedNote.copyWith(isEncrypted: false).resetOid();
+
+      var repo = context.read<GitJournalRepo>();
+      var savedNote = await repo.updateNote(note, plainNote);
+
+      if (mounted) {
+        setState(() {
+          _note = savedNote;
+          _encryptionPassword = null;
+          _originalNoteOid = savedNote.oid;
+          _originalNoteData = savedNote.data;
+        });
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Note decrypted')),
+      );
+    } catch (e, st) {
+      Log.e("Decrypt note failed", ex: e, stacktrace: st);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to decrypt: $e')),
+        );
+      }
+    }
+  }
 
   Future<void> _renameNote(Note note) async {
     assert(note.oid.isEmpty);
@@ -559,10 +745,12 @@ class NoteEditorState extends State<NoteEditor>
             _note = note;
           });
         }
-        await repo.addNote(note);
+        await repo.addNote(note,
+            encryptionPassword: note.isEncrypted ? _encryptionPassword : null);
       } else {
         var originalNote = widget.existingNote!;
-        var modifiedNote = await repo.updateNote(originalNote, note);
+        var modifiedNote = await repo.updateNote(originalNote, note,
+            encryptionPassword: note.isEncrypted ? _encryptionPassword : null);
         if (!mounted) return false;
         setState(() {
           _note = modifiedNote;
@@ -595,6 +783,8 @@ class NoteEditorState extends State<NoteEditor>
         return _journalEditorKey.currentState;
       case EditorType.Org:
         return _orgEditorKey.currentState;
+      case EditorType.AppFlowy:
+        return _appFlowyEditorKey.currentState;
     }
   }
 

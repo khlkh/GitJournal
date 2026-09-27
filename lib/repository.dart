@@ -552,19 +552,19 @@ class GitJournalRepo with ChangeNotifier {
     return newNotes;
   }
 
-  Future<Note> saveNoteToDisk(Note note) async {
+  Future<Note> saveNoteToDisk(Note note, {String? encryptionPassword}) async {
     _checkWriteAllowed();
     assert(note.oid.isEmpty);
-    return NoteStorage.save(note);
+    return NoteStorage.save(note, encryptionPassword: encryptionPassword);
   }
 
-  Future<Note> addNote(Note note) async {
+  Future<Note> addNote(Note note, {String? encryptionPassword}) async {
     _checkWriteAllowed();
     assert(note.oid.isEmpty);
     logEvent(Event.NoteAdded);
 
     note = note.updateModified();
-    note = await NoteStorage.save(note);
+    note = await NoteStorage.save(note, encryptionPassword: encryptionPassword);
     note.parent.add(note);
 
     await _gitOpLock.synchronized(() async {
@@ -625,7 +625,8 @@ class GitJournalRepo with ChangeNotifier {
     unawaited(_syncNotes());
   }
 
-  Future<Note> updateNote(Note oldNote, Note newNote) async {
+  Future<Note> updateNote(Note oldNote, Note newNote,
+      {String? encryptionPassword}) async {
     _checkWriteAllowed();
     assert(oldNote.oid.isNotEmpty);
     assert(newNote.oid.isEmpty);
@@ -638,7 +639,8 @@ class GitJournalRepo with ChangeNotifier {
     newNote = newNote.updateModified();
 
     try {
-      newNote = await NoteStorage.save(newNote);
+      newNote = await NoteStorage.save(newNote,
+          encryptionPassword: encryptionPassword);
     } catch (ex, st) {
       Log.e("Note saving failed", ex: ex, stacktrace: st);
       rethrow;
@@ -723,6 +725,54 @@ class GitJournalRepo with ChangeNotifier {
     var repo = await GitAsyncRepository.load(repoPath);
     var config = repo.config.remotes;
     return config;
+  }
+
+  /// 添加新的 remote
+  Future<void> addRemote({
+    required String name,
+    required String url,
+  }) async {
+    var repo = GitRepository.load(repoPath);
+    try {
+      repo.addRemote(name, url);
+      repo.saveConfig();
+    } finally {
+      repo.close();
+    }
+  }
+
+  /// 更新 remote URL
+  Future<void> updateRemoteUrl({
+    required String name,
+    required String url,
+  }) async {
+    var repo = GitRepository.load(repoPath);
+    try {
+      var remoteConfig = repo.config.remote(name);
+      if (remoteConfig != null) {
+        repo.config.remotes[repo.config.remotes.indexOf(remoteConfig)] = 
+            GitRemoteConfig(
+              name: name,
+              url: url,
+              fetch: remoteConfig.fetch,
+            );
+        repo.saveConfig();
+      }
+    } finally {
+      repo.close();
+    }
+  }
+
+  /// 获取 remote 名称列表
+  Future<List<String>> remoteNames() async {
+    var configs = await remoteConfigs();
+    return configs.map((c) => c.name).toList();
+  }
+
+  /// 检查 remote 是否存在
+  Future<bool> remoteExists(String name) async {
+    var configs = await remoteConfigs();
+    return configs.any((c) => c.name == name);
   }
 
   Future<List<String>> branches() async {
@@ -887,6 +937,20 @@ class GitJournalRepo with ChangeNotifier {
     // 3. Share the zip file
     await Share.shareXFiles([XFile(exportPath, name: "$repoName.zip")]);
     await dir.delete(recursive: true);
+  }
+
+  /// Copy the entire git repo (including .git) to a destination directory.
+  /// The repo will be copied into [destDir]/[folderName]/.
+  Future<void> copyRepoTo(String destDir) async {
+    var repoName = p.basename(repoPath);
+    var destPath = p.join(destDir, repoName);
+
+    if (destPath == repoPath) {
+      throw ArgumentError('Destination is the same as source');
+    }
+
+    await io.Directory(destPath).create(recursive: true);
+    await _copyDirectory(repoPath, destPath);
   }
 }
 

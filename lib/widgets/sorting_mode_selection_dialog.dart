@@ -33,13 +33,6 @@ class _SortingModeSelectionDialogState
 
   @override
   Widget build(BuildContext context) {
-    var children = <Widget>[
-      SettingsHeader(context.loc.settingsSortingModeField),
-      for (var sf in SortingField.options) _buildSortingTile(sf),
-      SettingsHeader(context.loc.settingsSortingModeOrder),
-      for (var so in SortingOrder.options) _buildSortingOrderTile(so),
-    ];
-
     return AlertDialog(
       title: Text(context.loc.widgetsSortingOrderSelectorTitle),
       content: SingleChildScrollView(
@@ -47,7 +40,38 @@ class _SortingModeSelectionDialogState
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: children,
+          children: [
+            SettingsHeader(context.loc.settingsSortingModeField),
+            RadioGroup<SortingField>(
+              groupValue: _field,
+              onChanged: (SortingField? sf) {
+                setState(() {
+                  _field = sf!;
+                });
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var sf in SortingField.options) _buildSortingTile(sf),
+                ],
+              ),
+            ),
+            SettingsHeader(context.loc.settingsSortingModeOrder),
+            RadioGroup<SortingOrder>(
+              groupValue: _order,
+              onChanged: (SortingOrder? so) {
+                setState(() {
+                  _order = so!;
+                });
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var so in SortingOrder.options) _buildSortingOrderTile(so),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
       actions: [
@@ -79,12 +103,6 @@ class _SortingModeSelectionDialogState
     return RadioListTile<SortingField>(
       title: Text(sf.toPublicString(context)),
       value: sf,
-      groupValue: _field,
-      onChanged: (SortingField? sf) {
-        setState(() {
-          _field = sf!;
-        });
-      },
     );
   }
 
@@ -92,12 +110,6 @@ class _SortingModeSelectionDialogState
     return RadioListTile<SortingOrder>(
       title: Text(so.toPublicString(context)),
       value: so,
-      groupValue: _order,
-      onChanged: (SortingOrder? so) {
-        setState(() {
-          _order = so!;
-        });
-      },
     );
   }
 }

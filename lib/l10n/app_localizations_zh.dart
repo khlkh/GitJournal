@@ -1406,6 +1406,103 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get failedToExport => 'Failed to Export';
+
+  @override
+  String get settingsGitRepoInfo => 'Git 仓库信息';
+
+  @override
+  String get settingsGitRepoInfoId => '仓库 ID';
+
+  @override
+  String get settingsGitRepoInfoBranch => '当前分支';
+
+  @override
+  String get settingsGitRepoInfoPath => '仓库路径';
+
+  @override
+  String get settingsGitRepoInfoRemoteConfigured => '远程仓库已配置';
+
+  @override
+  String get settingsGitRepoInfoRemoteYes => '是';
+
+  @override
+  String get settingsGitRepoInfoRemoteNo => '否';
+
+  @override
+  String get settingsGitRepoInfoRemoteUrl => '远程地址';
+
+  @override
+  String get settingsGitRepoInfoPendingChanges => '待提交更改';
+
+  @override
+  String get settingsListReposTitle => 'Repositories';
+
+  @override
+  String get settingsListReposSubtitle => 'Manage multiple Git repositories';
+
+  @override
+  String get settingsReposTitle => 'Repositories';
+
+  @override
+  String get settingsReposAddRepo => 'Add Repository';
+
+  @override
+  String get settingsReposRepoName => 'Repository Name';
+
+  @override
+  String get settingsReposRepoNameHint => 'My Journal';
+
+  @override
+  String get settingsReposRepoNameError => 'Please enter a name';
+
+  @override
+  String get settingsReposCurrentBadge => 'Current';
+
+  @override
+  String get settingsReposRenameRepo => 'Rename';
+
+  @override
+  String get settingsReposDeleteRepo => 'Delete Repository';
+
+  @override
+  String get settingsReposDelete => 'Delete';
+
+  @override
+  String settingsReposDeleteWarning(String name) {
+    return 'Are you sure you want to delete \"$name\"? This cannot be undone.';
+  }
+
+  @override
+  String settingsReposDeleteCurrentWarning(String name) {
+    return 'This is your current repository. Deleting it will switch you to another repository. Are you sure you want to delete \"$name\"?';
+  }
+
+  @override
+  String get settingsReposAddError => 'Failed to add repository';
+
+  @override
+  String get settingsReposSwitchError => 'Failed to switch repository';
+
+  @override
+  String get settingsReposRenameError => 'Failed to rename repository';
+
+  @override
+  String get settingsReposDeleteError => 'Failed to delete repository';
+
+  @override
+  String get settingsReposAddToHome => 'Add to Home Screen';
+
+  @override
+  String settingsReposWidgetAdded(String name) {
+    return '\"$name\" added to home screen';
+  }
+
+  @override
+  String get settingsReposWidgetPinFailed =>
+      'Failed to pin widget to home screen';
+
+  @override
+  String get settingsReposWidgetError => 'Failed to add widget';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -2723,6 +2820,102 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get singleJournalEntry => '每天一个日记条目文件';
+
+  @override
+  String get settingsGitRepoInfo => 'Git 仓库信息';
+
+  @override
+  String get settingsGitRepoInfoId => '仓库 ID';
+
+  @override
+  String get settingsGitRepoInfoBranch => '当前分支';
+
+  @override
+  String get settingsGitRepoInfoPath => '仓库路径';
+
+  @override
+  String get settingsGitRepoInfoRemoteConfigured => '远程仓库已配置';
+
+  @override
+  String get settingsGitRepoInfoRemoteYes => '是';
+
+  @override
+  String get settingsGitRepoInfoRemoteNo => '否';
+
+  @override
+  String get settingsGitRepoInfoRemoteUrl => '远程地址';
+
+  @override
+  String get settingsGitRepoInfoPendingChanges => '待提交更改';
+
+  @override
+  String get settingsListReposTitle => '仓库';
+
+  @override
+  String get settingsListReposSubtitle => '管理多个 Git 仓库';
+
+  @override
+  String get settingsReposTitle => '仓库管理';
+
+  @override
+  String get settingsReposAddRepo => '添加仓库';
+
+  @override
+  String get settingsReposRepoName => '仓库名称';
+
+  @override
+  String get settingsReposRepoNameHint => '我的笔记';
+
+  @override
+  String get settingsReposRepoNameError => '请输入名称';
+
+  @override
+  String get settingsReposCurrentBadge => '当前';
+
+  @override
+  String get settingsReposRenameRepo => '重命名';
+
+  @override
+  String get settingsReposDeleteRepo => '删除仓库';
+
+  @override
+  String get settingsReposDelete => '删除';
+
+  @override
+  String settingsReposDeleteWarning(String name) {
+    return '确定要删除「$name」吗？此操作无法撤销。';
+  }
+
+  @override
+  String settingsReposDeleteCurrentWarning(String name) {
+    return '这是你当前使用的仓库。删除后将自动切换到另一个仓库。确定要删除「$name」吗？';
+  }
+
+  @override
+  String get settingsReposAddError => '添加仓库失败';
+
+  @override
+  String get settingsReposSwitchError => '切换仓库失败';
+
+  @override
+  String get settingsReposRenameError => '重命名仓库失败';
+
+  @override
+  String get settingsReposDeleteError => '删除仓库失败';
+
+  @override
+  String get settingsReposAddToHome => '添加到主屏幕';
+
+  @override
+  String settingsReposWidgetAdded(String name) {
+    return '已将\"$name\"添加到主屏幕';
+  }
+
+  @override
+  String get settingsReposWidgetPinFailed => '添加小组件到主屏幕失败';
+
+  @override
+  String get settingsReposWidgetError => '添加小组件失败';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -4098,4 +4291,31 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get singleJournalEntry => 'Single Journal Entry File per day';
+
+  @override
+  String get settingsGitRepoInfo => 'Git 仓库信息';
+
+  @override
+  String get settingsGitRepoInfoId => '仓库 ID';
+
+  @override
+  String get settingsGitRepoInfoBranch => '当前分支';
+
+  @override
+  String get settingsGitRepoInfoPath => '仓库路径';
+
+  @override
+  String get settingsGitRepoInfoRemoteConfigured => '远程仓库已配置';
+
+  @override
+  String get settingsGitRepoInfoRemoteYes => '是';
+
+  @override
+  String get settingsGitRepoInfoRemoteNo => '否';
+
+  @override
+  String get settingsGitRepoInfoRemoteUrl => '远程地址';
+
+  @override
+  String get settingsGitRepoInfoPendingChanges => '待提交更改';
 }

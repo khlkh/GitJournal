@@ -205,6 +205,31 @@ class Log {
     return p.join(logFolderPath, '$date.jsonl');
   }
 
+  static Future<void> clearLogs() async {
+    // Close current log file
+    if (logFile != null) {
+      await logFile!.close();
+      logFile = null;
+    }
+
+    // Delete all log files in the log folder
+    var dir = Directory(logFolderPath);
+    if (dir.existsSync()) {
+      for (var file in dir.listSync()) {
+        if (file is File && file.path.endsWith('.jsonl')) {
+          try {
+            file.deleteSync();
+          } catch (e) {
+            // Ignore deletion errors
+          }
+        }
+      }
+    }
+
+    // Reopen a new log file
+    await setLogCapture(true);
+  }
+
   static List<String> filePathsForDates(int n) {
     var today = DateTime.now();
     var l = <String>[];
