@@ -8,7 +8,6 @@
 
 import 'dart:convert';
 
-import 'package:dart_git/utils/file_extensions.dart';
 import 'package:gitjournal/logger/logger.dart';
 import 'package:gitjournal/settings/settings.dart';
 import 'package:universal_io/io.dart';
@@ -66,7 +65,10 @@ Future<void> _gitCommandViaExecutable({
   var dir = Directory.systemTemp.createTempSync();
   var temp = File("${dir.path}/key");
   await temp.writeAsString(privateKey);
-  temp.chmodSync(int.parse('0600', radix: 8));
+  // NOTE: File.chmodSync here resolves to a no-op extension from dart_git
+  // (utils/file_extensions.dart), so use the system chmod instead. ssh refuses
+  // to use keys with permissive modes ("UNPROTECTED PRIVATE KEY FILE").
+  await Process.run('chmod', ['600', temp.path]);
 
   var command = 'git ${args.join(' ')}';
   Log.i("Running $command");
@@ -116,7 +118,7 @@ Future<String> gitDefaultBranchViaExecutable({
   var dir = Directory.systemTemp.createTempSync();
   var temp = File("${dir.path}/key");
   await temp.writeAsString(privateKey);
-  temp.chmodSync(int.parse('0600', radix: 8));
+  await Process.run('chmod', ['600', temp.path]);
 
   var process = await Process.start(
     'git',
