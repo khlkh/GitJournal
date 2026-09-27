@@ -103,6 +103,18 @@
 - [ ] 关注 weijia/go_git_dart 后续是否补上 proxy 支持
 - [ ] （可选）评估把 go_git_dart 的 unpack/malformed mode 修复回提上游
 
+### E. 运行时修复记录（2026-09-27 深夜追加）
+- [x] **Linux SSH 克隆失败**（`UNPROTECTED PRIVATE KEY FILE` → exit 128）：
+  - 根因：`git_desktop.dart` 里 `temp.chmodSync(0600)` 调用的是 dart_git 的**空实现扩展**（真 chmod 被注释），临时私钥一直是 0664，ssh 拒绝
+  - 修复：改用系统 `chmod 600`（加了平台守卫，仅 Linux/macOS），并顺带修了 stderr 被吞的问题（`96f90249`、`3a78bf64`、`1ae47f6b`）
+- [x] **Android 克隆报 `malformed mode (0100600)`**：
+  - 根因 1（直接）：本地构建 APK 用了 weijia/go_git_dart 仓库里**旧的预编译 .so**（3dcb23f，2026-05-26，早于 3a76c2e 的 clone 兜底/normalizeFileMode 修复），go-git 严格解析器拒绝远端仓库里的非法 mode
+  - 根因 2（源头）：**dart-git 的 `GitIndexEntry.fromFS` 把文件系统原始 `stat.mode` 直接写进 git tree**（`lib/plumbing/index.dart:284`：`mode: GitFileMode(stat.mode)`），文件权限 0600 → 写成 `0100600` → 桌面端 commit/push 后远端仓库带非法 mode
+  - 已做：安装 Go 1.25.5 + NDK r25c，从 weijia/go_git_dart 源码重建 4 个 ABI 的 .so，替换 pub cache，重打 release APK（`app-prod-release.apk` 已含新 .so，已验证哈希）
+  - [ ] **长期方案 A**：fork weijia/go_git_dart → 提交重建后的 .so → pubspec 指向自己 fork（否则本地 `flutter pub get` 会重新拉旧 .so；CI 构建不受影响，因为 weijia 的 CI 每次都从源码重建）
+  - [ ] **长期方案 B**：修 dart-git 根因——`GitIndexEntry.fromFS` 应把普通文件规范化为 100644/100755（`mode & 0o170000 == 0o100000` 时忽略权限位），需 fork GitJournal/dart-git 或 vendor 进仓库，防止以后再产生 0100600
+  - [ ] 用户现有远端仓库里已有的 0100600 条目：新 .so 的 clone 兜底应能绕过；彻底清理需重写历史（风险高，谨慎）
+
 ## 参考
 - 上游：https://github.com/GitJournal/GitJournal
 - weijia fork：https://github.com/weijia/GitJournal
