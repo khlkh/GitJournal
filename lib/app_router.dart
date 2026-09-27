@@ -128,7 +128,6 @@ class AppRouter {
   ) {
     switch (route) {
       case '/':
-      case HomeScreen.routePath:
         return HomeScreen();
       case FolderListingScreen.routePath:
         return FolderListingScreen();

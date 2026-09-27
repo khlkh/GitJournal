@@ -561,8 +561,6 @@ abstract class AppLocalizations {
   /// **'Language'**
   String get settingsDisplayLang;
 
-  /// No description provided for @settingsGitAuthor.
-  ///
   /// No description provided for @settingsGitRepoInfo.
   ///
   /// In en, this message translates to:

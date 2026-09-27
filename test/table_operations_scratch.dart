@@ -92,7 +92,7 @@ class MockTableNode {
 
     // Insert new cells (from bottom to top to keep indices stable)
     for (var row = rowsLen - 1; row >= 0; row--) {
-      final cellIndex = row * (colsLen + 1) + newColIndex;
+      final cellIndex = row * colsLen + newColIndex;
       children.insert(cellIndex, MockCell(rowPosition: row, colPosition: newColIndex));
     }
 

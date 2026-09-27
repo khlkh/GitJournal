@@ -159,7 +159,6 @@ class ChecklistEditorState extends State<ChecklistEditor>
     ));
 
     Widget checklistWidget = ReorderableListView(
-      children: itemTiles,
       onReorder: widget.readOnly
           ? (oldIndex, newIndex) {}
           : (int oldIndex, int newIndex) {
@@ -174,6 +173,7 @@ class ChecklistEditorState extends State<ChecklistEditor>
                 }
               });
             },
+      children: itemTiles,
     );
 
     var titleEditor = Padding(

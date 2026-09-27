@@ -289,7 +289,7 @@ class JournalAppState extends State<JournalApp> with WidgetsBindingObserver {
     Log.i("Widget: _initWidgetHandling done, stream subscription set up");
   }
 
-  void _switchToRepo(String repoId) async {
+  Future<void> _switchToRepo(String repoId) async {
     var repoManager = context.read<RepositoryManager>();
     if (!repoManager.repoIds.contains(repoId)) {
       Log.e("Widget: repo not found: $repoId (available: ${repoManager.repoIds})");
@@ -358,7 +358,7 @@ class JournalAppState extends State<JournalApp> with WidgetsBindingObserver {
       // This can happen during initial app boot before any repo is loaded,
       // or after a repo deletion (clearExisting). Show a loading indicator
       // instead of a blank screen.
-      return MaterialApp(
+      return const MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(
           body: Center(

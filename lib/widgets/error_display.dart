@@ -37,8 +37,8 @@ class ErrorDisplay extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: const [
+              const Row(
+                children: [
                   Icon(Icons.error_outline, color: Colors.red, size: 28),
                   SizedBox(width: 8),
                   Expanded(

@@ -561,5 +561,18 @@
   "onBoardingSubtitle": "An Open Source Note Taking App built on top of Git",
   "onBoardingPage2": "Your Notes are stored in a standard Markdown + YAML Header format",
   "onBoardingPage3": "Sync your Local Git Repo with any provider",
-  "singleJournalEntry": "Single Journal Entry File per day"
+  "singleJournalEntry": "Single Journal Entry File per day",
+  "exportRepo": "导出仓库",
+  "failedToExport": "导出失败",
+  "settingsDebugClearDone": "日志已清除",
+  "settingsDebugClearMessage": "确定要清除所有日志吗？",
+  "settingsDebugClearTitle": "清除日志",
+  "settingsMultipleGitRemotesNotSupported": "暂不支持多个 Git 远程仓库",
+  "settingsNoRemoteConfigured": "未配置 Git 托管服务",
+  "settingsNoteMetaDataDateFormatYearMonthDay": "YYYY-MM-DD",
+  "settingsStorageCopyRepo": "复制仓库到目录",
+  "settingsStorageCopyRepoDone": "仓库已复制",
+  "settingsStorageCopyRepoSubtitle": "将整个仓库（含 .git）复制到所选目录",
+  "shareAsZip": "以 ZIP 文件分享",
+  "widgetsNotesFolderDeleteDialogTitle": "确定要删除此文件夹及其中的所有内容吗？"
 }

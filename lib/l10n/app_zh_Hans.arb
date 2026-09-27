@@ -559,5 +559,20 @@
   "onBoardingSubtitle": "基于 Git 构建的开源笔记应用",
   "onBoardingPage2": "你的笔记以标准的 Markdown + YAML 头部格式存储",
   "onBoardingPage3": "将你的本地 Git 仓库与任何服务商同步",
-  "singleJournalEntry": "每天一个日记条目文件"
+  "singleJournalEntry": "每天一个日记条目文件",
+  "exportRepo": "导出仓库",
+  "failedToExport": "导出失败",
+  "settingsDebugClearDone": "日志已清除",
+  "settingsDebugClearMessage": "确定要清除所有日志吗？",
+  "settingsDebugClearTitle": "清除日志",
+  "settingsMultipleGitRemotesNotSupported": "暂不支持多个 Git 远程仓库",
+  "settingsNoRemoteConfigured": "未配置 Git 托管服务",
+  "settingsNoteMetaDataDateFormatYearMonthDay": "YYYY-MM-DD",
+  "settingsStorageCopyRepo": "复制仓库到目录",
+  "settingsStorageCopyRepoDone": "仓库已复制",
+  "settingsStorageCopyRepoSubtitle": "将整个仓库（含 .git）复制到所选目录",
+  "shareAsZip": "以 ZIP 文件分享",
+  "widgetsNotesFolderDeleteDialogTitle": "确定要删除此文件夹及其中的所有内容吗？",
+  "settingsEditorsReadOnlyMode": "只读模式",
+  "settingsEditorsReadOnlyModeSubtitle": "开启后笔记不可编辑、删除、重命名、移动或新建"
 }
