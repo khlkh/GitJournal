@@ -1,0 +1,9 @@
+# Devenv
+.devenv*
+devenv.local.nix
+.direnv
+
+.dart_tool
+
+src/gitjournal.h
+src/gitjournal.so

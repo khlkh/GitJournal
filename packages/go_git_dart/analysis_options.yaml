@@ -1,0 +1,5 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - 'lib/go_git_dart_bindings_generated.dart'

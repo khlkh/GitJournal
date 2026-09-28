@@ -1,0 +1,20 @@
+name: go_git_dart
+description: "Bindings for go-git"
+version: 0.0.2
+
+environment:
+  sdk: ">=3.2.0 <4.0.0"
+  flutter: ">=3.3.0"
+
+dependencies:
+  ffi: ^2.0.2
+  flutter:
+    sdk: flutter
+  plugin_platform_interface: ^2.0.2
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: io.gitjournal.go_git_dart
+        pluginClass: GoGitDartFlutterLibsPlugin

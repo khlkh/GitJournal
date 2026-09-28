@@ -110,10 +110,15 @@
 - [x] **Android 克隆报 `malformed mode (0100600)`**：
   - 根因 1（直接）：本地构建 APK 用了 weijia/go_git_dart 仓库里**旧的预编译 .so**（3dcb23f，2026-05-26，早于 3a76c2e 的 clone 兜底/normalizeFileMode 修复），go-git 严格解析器拒绝远端仓库里的非法 mode
   - 根因 2（源头）：**dart-git 的 `GitIndexEntry.fromFS` 把文件系统原始 `stat.mode` 直接写进 git tree**（`lib/plumbing/index.dart:284`：`mode: GitFileMode(stat.mode)`），文件权限 0600 → 写成 `0100600` → 桌面端 commit/push 后远端仓库带非法 mode
-  - 已做：安装 Go 1.25.5 + NDK r25c，从 weijia/go_git_dart 源码重建 4 个 ABI 的 .so，替换 pub cache，重打 release APK（`app-prod-release.apk` 已含新 .so，已验证哈希）
-  - [ ] **长期方案 A**：fork weijia/go_git_dart → 提交重建后的 .so → pubspec 指向自己 fork（否则本地 `flutter pub get` 会重新拉旧 .so；CI 构建不受影响，因为 weijia 的 CI 每次都从源码重建）
-  - [ ] **长期方案 B**：修 dart-git 根因——`GitIndexEntry.fromFS` 应把普通文件规范化为 100644/100755（`mode & 0o170000 == 0o100000` 时忽略权限位），需 fork GitJournal/dart-git 或 vendor 进仓库，防止以后再产生 0100600
-  - [ ] 用户现有远端仓库里已有的 0100600 条目：新 .so 的 clone 兜底应能绕过；彻底清理需重写历史（风险高，谨慎）
+  - [x] **已关闭（审查意见全部落地，2026-09-28）**：
+    - vendor go_git_dart 进 `packages/go_git_dart`，`pubspec.yaml` 改为 `path:` 依赖——fresh `flutter pub get` 不再拉旧 .so
+    - 修复 Clone 兜底 **detached HEAD**：先建分支引用，再 `NewSymbolicReference(HEAD, branch)`（原实现用 HashReference HEAD，`Repository.currentBranch()` 会抛 GitHeadDetached）
+    - 修复 `normalizeFileMode` **保留可执行位**（`mode&0o111 != 0 → 0100755`，否则 0100644），与 go-git fork 的 CanonicalTreeMode 对齐
+    - 新增 Go 单元测试 `TestCloneMalformedModeRepo`：构造含 0100600 条目的 tree 做源仓库，验证 Clone 成功、HEAD 是分支（非 detached）、文件内容正确——`go test ./internal/git/` 通过
+    - 重建 4 ABI .so 并提交进 vendor 包；重打 release APK（119.7MB），解包验证 .so 来自 vendored 构建
+    - 更新 `scripts/verify_go_git_dart.dart` 支持 vendored path 检查
+  - [ ] **长期方案 B（未做）**：修 dart-git 根因——`GitIndexEntry.fromFS` 应把普通文件规范化为 100644/100755，需 fork GitJournal/dart-git 或 vendor 进仓库，防止以后再产生 0100600
+  - [ ] 用户现有远端仓库里已有的 0100600 条目：新 .so 的 decode 规范化应能绕过；彻底清理需重写历史（风险高，谨慎）
 
 ## 参考
 - 上游：https://github.com/GitJournal/GitJournal

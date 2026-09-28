@@ -761,11 +761,9 @@ packages:
   go_git_dart:
     dependency: "direct main"
     description:
-      path: "."
-      ref: main
-      resolved-ref: "4d77e4b1964b0302bf35ef208d225e8cec50ccaf"
-      url: "https://github.com/weijia/go_git_dart.git"
-    source: git
+      path: "packages/go_git_dart"
+      relative: true
+    source: path
     version: "0.0.2"
   go_router:
     dependency: transitive
