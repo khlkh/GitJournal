@@ -23,8 +23,9 @@ dependencies:
   cryptography: ^2.0.5
   dart_date: ^1.5.3
   dart_git:
-    git: https://github.com/GitJournal/dart-git.git
-    # path: ../gitjournal/dart-git
+    git:
+      url: https://github.com/khlkh/dart-git.git
+      ref: 8bf1b53e92dcbee3b090b5d8e3ae3376c1190e29
   device_info_plus: ^11.0.0
   dio: ^4.0.6
   dio_smart_retry: ^1.2.0

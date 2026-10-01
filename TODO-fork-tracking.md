@@ -117,7 +117,13 @@
     - 新增 Go 单元测试 `TestCloneMalformedModeRepo`：构造含 0100600 条目的 tree 做源仓库，验证 Clone 成功、HEAD 是分支（非 detached）、文件内容正确——`go test ./internal/git/` 通过
     - 重建 4 ABI .so 并提交进 vendor 包；重打 release APK（119.7MB），解包验证 .so 来自 vendored 构建
     - 更新 `scripts/verify_go_git_dart.dart` 支持 vendored path 检查
-  - [ ] **长期方案 B（未做）**：修 dart-git 根因——`GitIndexEntry.fromFS` 应把普通文件规范化为 100644/100755，需 fork GitJournal/dart-git 或 vendor 进仓库，防止以后再产生 0100600
+  - [x] **长期方案 B（已完成，2026-10-01）**：fork 到 `khlkh/dart-git`，补丁按审查意见落在三处：
+    - `commit.dart:117`（主）：`mode: GitFileMode.canonicalize(entry.mode)`
+    - `index.dart fromFS`（防御入口）：`GitFileMode.canonicalize(GitFileMode(stat.mode))`
+    - `merge.dart _combineTrees`（合并路径）：写入合并树前对 entries 做 canonicalize
+    - 规则：普通文件带执行位 → 100755，否则 → 100644；symlink/gitlink/dir 不动
+    - 新增 `test/file_mode_test.dart`（canonicalize 单元 + writeTree 集成：0600→100644、0755→100755）
+    - dart-git 全量测试 187 过 / 2 跳过；GitJournal `pubspec.yaml` 已 pin 到 `8bf1b53`，`flutter analyze`/`flutter test` 全绿
   - [ ] 用户现有远端仓库里已有的 0100600 条目：新 .so 的 decode 规范化应能绕过；彻底清理需重写历史（风险高，谨慎）
 
 ## 参考
